@@ -22,7 +22,7 @@ npm run walmart:uploads -- cleanup
 
 The list contains capture IDs, hashes, sizes, origin and expiry only. Inspect reports worksheet names and counts of cells/formulas without dumping cell values. These are local administrative commands, not API routes. While a copy exists, an authorized operator can study `CORPUS_STORE_DIR/<id>/original.xlsx` on the private host. Do not export it into permanent fixtures, logs or reports; all copies and workbook-specific study material must respect the one-hour limit.
 
-The Docker runtime contains an equivalent bundled CLI:
+The Docker runtime maps `npm run walmart:uploads -- list` (and the other subcommands) to its bundled CLI, so it does not require development dependencies such as `tsx`. Local development continues to use the TypeScript source. Older images with the original npm script can invoke the bundled CLI directly:
 
 ```sh
 node study-uploads.cjs list

@@ -18,6 +18,7 @@ COPY --from=build /app/public ./public
 COPY --from=build /app/data/walmart/compiled ./data/walmart/compiled
 COPY --from=build /app/stats.cjs ./stats.cjs
 COPY --from=build /app/study-uploads.cjs ./study-uploads.cjs
+RUN npm pkg set 'scripts.walmart:uploads=node study-uploads.cjs'
 COPY --chmod=755 docker/entrypoint.sh /usr/local/bin/feedfix-entrypoint
 EXPOSE 3000
 ENTRYPOINT ["feedfix-entrypoint"]
