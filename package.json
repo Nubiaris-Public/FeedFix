@@ -19,7 +19,8 @@
     "walmart:schema:compile": "node --max-old-space-size=384 --import tsx tools/walmart-schema/cli.ts compile",
     "walmart:schema:verify": "node --max-old-space-size=768 --import tsx tools/walmart-schema/cli.ts verify",
     "walmart:golden": "tsx tools/walmart-schema/golden-cli.ts",
-    "walmart:fixtures": "tsx tools/walmart-schema/generate-official-fixture.ts"
+    "walmart:fixtures": "tsx tools/walmart-schema/generate-official-fixture.ts",
+    "walmart:uploads": "node --import tsx scripts/study-uploads.ts"
   },
   "dependencies": {
     "@next/env": "^16.3.4",

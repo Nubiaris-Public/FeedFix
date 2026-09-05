@@ -1,5 +1,10 @@
 "use client";
 import Link from "next/link";
+import {
+  CONTRIBUTION_CONSENT_TEXT,
+  CONTRIBUTION_CONSENT_VERSION,
+  type ContributionReceipt,
+} from "../shared/contribution-consent";
 import { useEffect, useRef, useState } from "react";
 import type { FeedIssue, FixOperation } from "../engine/model";
 type Analysis = {
@@ -82,6 +87,10 @@ export default function FeedFix({
     [filter, setFilter] = useState("ALL"),
     [page, setPage] = useState(1),
     [notice, setNotice] = useState("");
+  const [studyConsent, setStudyConsent] = useState(false);
+  const [studyCopies, setStudyCopies] = useState<
+    Extract<ContributionReceipt, { status: "saved" }>[]
+  >([]);
   const fileInput = useRef<HTMLInputElement>(null),
     heading = useRef<HTMLHeadingElement>(null);
   async function api(path: string, options: RequestInit = {}) {
@@ -173,6 +182,7 @@ export default function FeedFix({
       return;
     }
     setFile(f);
+    setStudyConsent(false);
     event("file_selected", {
       file_size_bucket:
         f.size < 1024 * 1024
@@ -194,8 +204,18 @@ export default function FeedFix({
       const form = new FormData();
       form.set("file", file);
       if (report) form.set("report", report);
-      const res = await api("analyze", { method: "POST", body: form });
+      if (studyConsent) form.set("studyConsent", CONTRIBUTION_CONSENT_VERSION);
+      const res = await fetch("/api/analyze", { method: "POST", body: form });
       const data = await res.json();
+      if (data.contribution?.status === "saved") {
+        setStudyCopies((copies) => [...copies, data.contribution]);
+        setStudyConsent(false);
+      } else if (data.contribution?.status === "unavailable") {
+        setNotice(
+          "Your study copy could not be saved. Analysis is independent of sharing.",
+        );
+      }
+      if (!res.ok) throw new Error(data.error);
       sessionStorage.setItem("feedfix:" + data.analysis.id, data.token);
       setAnalysis(data.analysis);
       history.replaceState({}, "", "/?analysis=" + data.analysis.id);
@@ -340,6 +360,21 @@ export default function FeedFix({
                   onChange={(e) => setReport(e.target.files?.[0] ?? null)}
                 />
               </details>
+              <label className="study-consent">
+                <input
+                  type="checkbox"
+                  checked={studyConsent}
+                  onChange={(e) => setStudyConsent(e.target.checked)}
+                  disabled={Boolean(busy)}
+                />
+                <span>
+                  <strong>
+                    Help improve Walmart template support (optional)
+                  </strong>
+                  <br />
+                  {CONTRIBUTION_CONSENT_TEXT}
+                </span>
+              </label>
               <button
                 className="primary"
                 onClick={analyze}
@@ -393,9 +428,13 @@ export default function FeedFix({
                 <summary>What happens to my file?</summary>
                 <p>
                   Your workbook is stored temporarily for analysis and checkout,
-                  then automatically deleted within one hour. No AI analysis, no
-                  training and no Walmart account connection. Download before
-                  the expiry shown in your results.
+                  then automatically deleted within one hour. If you opt in, a
+                  separate private copy of the original workbook is kept for up
+                  to one hour to study template structure, even if analysis
+                  fails. You can delete that study copy early using the button
+                  shown after upload. Processing reports are not included in the
+                  study copy. No AI training or Walmart account connection.
+                  Download before expiry.
                 </p>
               </details>
               <details>
@@ -666,6 +705,46 @@ export default function FeedFix({
                 . Keep this tab open.
               </small>
             </div>
+          </section>
+        )}
+        {studyCopies.length > 0 && (
+          <section className="study-copies" aria-label="Private study copies">
+            <h2>Private study copies</h2>
+            {studyCopies.map((copy) => (
+              <div key={copy.id}>
+                <p>
+                  Original workbook saved for structure review only. Expires at{" "}
+                  {new Date(copy.expiresAt).toLocaleTimeString()}. Keep this tab
+                  open to delete it early.
+                </p>
+                <button
+                  className="secondary"
+                  disabled={Boolean(busy)}
+                  onClick={async () => {
+                    setBusy("Deleting study copy…");
+                    try {
+                      await api("contribution/" + copy.id, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ deleteToken: copy.deleteToken }),
+                      });
+                      setStudyCopies((copies) =>
+                        copies.filter((c) => c.id !== copy.id),
+                      );
+                      setNotice(
+                        "Study copy deleted. Your analysis is unchanged.",
+                      );
+                    } catch (e) {
+                      setError((e as Error).message);
+                    } finally {
+                      setBusy("");
+                    }
+                  }}
+                >
+                  Delete study copy now
+                </button>
+              </div>
+            ))}
           </section>
         )}
         <div aria-live="polite" className="status">

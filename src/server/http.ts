@@ -1,3 +1,5 @@
+import { ContributionStore } from "./contributions";
+import type { ContributionReceipt } from "../shared/contribution-consent";
 import { outcomeSchema } from "./usage";
 import { config } from "./config";
 import { analyze, download, publicAnalysis, feedback } from "./service";
@@ -74,6 +76,7 @@ const json = (body: unknown, status = 200) =>
   Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
 export async function handle(request: Request) {
   startCleanup();
+  let contribution: ContributionReceipt | undefined;
   const url = new URL(request.url),
     parts = url.pathname.replace(/^\/api\/?/, "").split("/"),
     action = parts[0],
@@ -102,6 +105,15 @@ export async function handle(request: Request) {
         },
         403,
       );
+    if (action === "contribution" && request.method === "POST") {
+      const data = JSON.parse((await boundedBody(request, 512)).toString());
+      if (typeof data.deleteToken !== "string")
+        throw new Error("This study deletion link is invalid.");
+      await exclusive(() =>
+        new ContributionStore().delete(id, data.deleteToken),
+      );
+      return json({ deleted: true });
+    }
     if (action === "events" && request.method === "POST") {
       const data = JSON.parse((await boundedBody(request, 2048)).toString());
       if (
@@ -150,7 +162,21 @@ export async function handle(request: Request) {
                 : "large",
         });
         const original = Buffer.from(await file.arrayBuffer());
-        return json(await exclusive(() => analyze(original, reportData)));
+        return json(
+          await exclusive(async () => {
+            const version = form.get("studyConsent");
+            try {
+              contribution = await new ContributionStore().save(
+                original,
+                typeof version === "string" ? version : undefined,
+              );
+            } catch {
+              contribution = { status: "unavailable" };
+              console.warn(JSON.stringify({ event: "study_copy_unavailable" }));
+            }
+            return { ...(await analyze(original, reportData)), contribution };
+          }),
+        );
       } finally {
         uploadsInFlight--;
       }
@@ -207,6 +233,7 @@ export async function handle(request: Request) {
       );
     return json(
       {
+        ...(contribution ? { contribution } : {}),
         error: safe
           ? message
           : "We couldn't process this file. Make sure you're uploading the original supported XLSX workbook and try again.",

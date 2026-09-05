@@ -78,3 +78,7 @@ docker run --rm -p 3000:3000 -v feedfix-data:/data \
 ```
 
 The project is prepared for deployment; creating a Railway environment, public domain and live Stripe configuration requires your accounts. No provider deployment or real charge is implied by local tests.
+
+## One-hour workbook study copies
+
+The Docker image defaults `CORPUS_STORE_DIR=/data/study` and initializes that private directory on the existing volume. User opt-in is required. Copies expire at 59 minutes and are swept every 30 seconds; keep the service running and exclude this directory from backups. Administer unexpired copies inside the container with `node study-uploads.cjs list` and `node study-uploads.cjs inspect <id>`. No public browsing endpoint exists. See [the study-copy guide](docs/workbook-study-copies.md) for limits and outage semantics.

@@ -1,3 +1,4 @@
+import { ContributionStore } from "./contributions";
 import {
   mkdir,
   readdir,
@@ -140,16 +141,15 @@ let started = false;
 export function startCleanup() {
   if (started) return;
   started = true;
-  void exclusive(async () => {
-    await store.cleanup();
-    await new UsageLog().cleanup();
-  }).catch(() => {});
-  setInterval(
-    () =>
-      void exclusive(async () => {
-        await store.cleanup();
-        await new UsageLog().cleanup();
-      }).catch(() => {}),
-    30000,
-  ).unref();
+  const sweep = async () => {
+    const results = await Promise.allSettled([
+      store.cleanup(),
+      new UsageLog().cleanup(),
+      new ContributionStore().cleanup(),
+    ]);
+    if (results[2].status === "rejected")
+      console.warn(JSON.stringify({ event: "study_cleanup_failed" }));
+  };
+  void exclusive(sweep).catch(() => {});
+  setInterval(() => void exclusive(sweep).catch(() => {}), 30000).unref();
 }

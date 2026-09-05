@@ -89,3 +89,7 @@ Only daily aggregates survive permanently. Temporary hashed deduplication receip
 Railway deployment: follow [RAILWAY.md](RAILWAY.md) for the service, volume, domain, optional Stripe and deployed statistics.
 
 Google indexing and Search Console: [SEO.md](SEO.md). Indexing is opt-in with `SEO_INDEXABLE=true` on the final HTTPS production domain.
+
+## Optional workbook study copies
+
+An unchecked upload option lets a user share the original workbook privately for up to one hour to help study template structure. Unsupported layouts can be retained with consent even when analysis fails. There is no permanent fixture ingestion or AI training. Copies begin as `UNKNOWN`, remain separate from analysis records, and can be deleted early by the uploader. Run `npm run walmart:uploads -- list` to find unexpired copies on the private host. See [the storage, retention and operator guide](docs/workbook-study-copies.md).

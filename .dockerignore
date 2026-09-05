@@ -14,3 +14,6 @@ test-results
 data/walmart/source
 **/*-api_MP_ITEM_*.json
 **/*:Zone.Identifier
+
+# Private, consented one-hour workbook study copies.
+.feedfix-study/

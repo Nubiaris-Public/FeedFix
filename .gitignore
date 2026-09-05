@@ -17,3 +17,6 @@ data/walmart/source/*
 !data/walmart/source/README.md
 **/*-api_MP_ITEM_*.json
 **/*:Zone.Identifier
+
+# Private, consented one-hour workbook study copies.
+.feedfix-study/

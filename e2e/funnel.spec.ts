@@ -83,3 +83,31 @@ test("landing and invalid upload feedback", async ({ page }, info) => {
     "XLSM is not supported",
   );
 });
+
+test("optional study copy has explicit consent and can be deleted early", async ({
+  page,
+}) => {
+  await page.goto("/");
+  const consent = page.getByRole("checkbox", {
+    name: /Help improve Walmart template support/,
+  });
+  await expect(consent).not.toBeChecked();
+  await page
+    .locator("#workbook")
+    .setInputFiles("tests/fixtures/walmart/valid.xlsx");
+  await consent.check();
+  await page.getByRole("button", { name: "Analyze file — free" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Analysis complete" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Private study copies" }),
+  ).toBeVisible();
+  await page.getByRole("button", { name: "Delete study copy now" }).click();
+  await expect(
+    page.getByText("Study copy deleted. Your analysis is unchanged."),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Private study copies" }),
+  ).toHaveCount(0);
+});

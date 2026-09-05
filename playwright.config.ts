@@ -14,6 +14,7 @@ export default defineConfig({
       CLARITY_PROJECT_ID: "",
       APP_URL: "http://127.0.0.1:3100",
       PAYMENT_MODE: "mock",
+      CORPUS_STORE_DIR: "/tmp/feedfix-playwright-study",
       TEMP_STORE_DIR: "/tmp/feedfix-playwright",
       USAGE_LOG_PATH: "/tmp/feedfix-playwright-metrics/usage.json",
       ALLOW_SYNTHETIC_FIXTURES: "true",
