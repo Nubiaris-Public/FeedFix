@@ -8,7 +8,7 @@ One Docker service, one 1 GB volume, one always-on replica. No database. Downloa
 2. Install Railway CLI **5.42.1 or newer**, run `railway login`, then `railway link` to select that environment. Run `npm ci` in this repository.
 3. Run `railway config plan`, review the proposed `feedfix` service and `feedfix-data` volume, then `railway config apply`. The configuration is [.railway/railway.ts](.railway/railway.ts). Use a dedicated environment: omitted resources in this project-level definition can be deleted. For an existing populated environment, import its configuration first and merge intentionally.
 4. The `feedfix` service explicitly uses GitHub repository `Nubiaris-Public/FeedFix`, branch `master`. Grant Railway access to that repository. Update `source` in the IaC file if you deploy a fork or another branch.
-5. In the service networking settings, generate a public domain. Set `APP_URL` to its exact HTTPS origin, without a trailing slash. Redeploy after changing variables.
+5. The definition declares custom domain `feedfix.app` and `APP_URL=https://feedfix.app`. In Railway networking, obtain the required DNS records for that domain and configure them with its DNS provider. Wait for domain/certificate verification, then open `https://feedfix.app`. Redeploy after changing variables.
 
 Railway discovers the root Dockerfile. Keep Build/Start command overrides empty: the image builds Next.js and starts `node server.js` through its entrypoint. Do not use `npm start` for this standalone image. Railway supplies `PORT`; the server binds to `0.0.0.0`.
 
@@ -35,9 +35,11 @@ The IaC file sets these non-secret defaults:
 | Healthcheck | `/api/health`, timeout 60 seconds |
 | Serverless / sleep | Disabled |
 
-Set these in Railway Variables; `preserve()` keeps them out of source:
+The production definition sets `APP_URL=https://feedfix.app` and `SEO_INDEXABLE=true`. The remaining site-specific values use `preserve()` and can be set in Railway Variables:
 
 - `APP_URL`: your public HTTPS origin. Required for browser requests and Checkout redirects.
+- `SEO_INDEXABLE=true`: enable Google indexing on the final production domain only. Defaults to false when absent. Keep previews false. See [SEO.md](SEO.md).
+- `GOOGLE_SITE_VERIFICATION`: optional Search Console HTML verification content value; managed in Railway Variables.
 - `ALLOW_SYNTHETIC_FIXTURES=true`: for a preview using the fictional fixtures. These cannot accept real payments. Set false for real traffic.
 - `SCHEMA_PATH`: absolute path to a reviewed official schema JSON for real files. There is no official Walmart schema bundled. Include the reviewed schema in the Docker image with an explicit `COPY` and point here; keep it outside `/data/feedfix`.
 - `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`: optional until enabling support payments. Missing keys do not block free analysis/downloads.

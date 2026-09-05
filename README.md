@@ -79,3 +79,5 @@ We count the first successful corrected XLSX generation requested for each analy
 Only daily aggregates survive permanently. Temporary hashed deduplication receipts expire with the analysis and are swept every 30 seconds while running; no content, filenames, product identifiers, IPs or bearer tokens are retained in metrics. Stopped hosts still require the lifecycle precautions described above. If metrics storage fails, downloads continue and a structured `correction_log_write_failed` warning is emitted. A later request retries the count; without a retry an undercount is possible. Do not treat absent log data as confirmed zero usage after a storage error.
 
 Railway deployment: follow [RAILWAY.md](RAILWAY.md) for the service, volume, domain, optional Stripe and deployed statistics.
+
+Google indexing and Search Console: [SEO.md](SEO.md). Indexing is opt-in with `SEO_INDEXABLE=true` on the final HTTPS production domain.

@@ -15,6 +15,7 @@ export default defineRailway(() => {
     build: { builder: "DOCKERFILE", dockerfilePath: "Dockerfile" },
     healthcheck: "/api/health",
     healthcheckTimeout: 60,
+    domains: ["feedfix.app"],
     replicas: { "us-west2": 1 },
     deploy: {
       sleepApplication: false,
@@ -33,7 +34,9 @@ export default defineRailway(() => {
       PAYMENT_MODE: "stripe",
       STRIPE_PRICE_AMOUNT: "499",
       ANALYTICS_ENABLED: "true",
-      APP_URL: preserve(),
+      APP_URL: "https://feedfix.app",
+      SEO_INDEXABLE: "true",
+      GOOGLE_SITE_VERIFICATION: preserve(),
       STRIPE_SECRET_KEY: preserve(),
       STRIPE_WEBHOOK_SECRET: preserve(),
       SCHEMA_PATH: preserve(),

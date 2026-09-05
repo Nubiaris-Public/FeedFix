@@ -375,9 +375,13 @@ export default function FeedFix({
             </p>
             <section className="faq" aria-label="Frequently asked questions">
               <details>
-                <summary>What can FeedFix safely fix?</summary>
+                <summary>
+                  Which Walmart item setup errors can FeedFix check?
+                </summary>
                 <p>
-                  Only deterministic changes authorized by the supported
+                  On supported templates, FeedFix checks GTIN/UPC format,
+                  required fields, duplicate SKUs, URLs and allowed values. It
+                  applies only deterministic changes authorized by the supported
                   template, such as extra whitespace or enum casing. We never
                   invent GTINs, SKUs or catalog information. Some issues need
                   your input or Walmart Support. Acceptance is not guaranteed.
@@ -393,7 +397,9 @@ export default function FeedFix({
                 </p>
               </details>
               <details>
-                <summary>Which files are supported?</summary>
+                <summary>
+                  Can I upload a Walmart bulk upload spreadsheet?
+                </summary>
                 <p>
                   XLSX up to {maxUpload} MB and 10,000 items.{" "}
                   {demo
