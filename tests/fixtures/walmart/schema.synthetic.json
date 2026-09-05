@@ -1,0 +1,83 @@
+{
+  "marketplace": "walmart",
+  "version": "SYNTHETIC-1",
+  "synthetic": true,
+  "provenance": "FeedFix fictitious test data. NOT an official Walmart template.",
+  "sheet": "Synthetic Items",
+  "headerRow": 2,
+  "marker": {
+    "cell": "A1",
+    "value": "FEEDFIX SYNTHETIC FIXTURE — NOT A WALMART TEMPLATE"
+  },
+  "fields": [
+    {
+      "column": "SKU",
+      "type": "sku",
+      "required": true
+    },
+    {
+      "column": "GTIN",
+      "type": "gtin",
+      "required": true,
+      "normalizeWhitespace": true
+    },
+    {
+      "column": "Title",
+      "type": "string",
+      "required": true,
+      "maxLength": 80,
+      "normalizeWhitespace": true
+    },
+    {
+      "column": "Image URL",
+      "type": "url",
+      "normalizeWhitespace": true
+    },
+    {
+      "column": "Price",
+      "type": "number",
+      "required": true,
+      "constraints": [
+        {
+          "kind": "min",
+          "value": 0
+        }
+      ]
+    },
+    {
+      "column": "Enabled",
+      "type": "boolean",
+      "enumValues": [
+        "Yes",
+        "No"
+      ]
+    },
+    {
+      "column": "Group",
+      "type": "string"
+    },
+    {
+      "column": "Brand",
+      "type": "string"
+    }
+  ],
+  "variants": {
+    "groupColumn": "Group",
+    "consistentColumns": [
+      "Brand"
+    ]
+  },
+  "report": {
+    "headerRow": 1,
+    "columns": {
+      "sku": "sku",
+      "row": "row",
+      "column": "column",
+      "code": "code",
+      "message": "message"
+    },
+    "supportCodes": [
+      "SYNTHETIC_CATALOG_CONFLICT"
+    ]
+  }
+}

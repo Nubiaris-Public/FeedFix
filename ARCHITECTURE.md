@@ -5,7 +5,7 @@
 | --- | --- | --- |
 | engine | Schema, parse, validate, issues, plan, surgical OOXML changes | — |
 | web | Landing, upload, free diagnosis | engine |
-| payment | Checkout, signed webhook, paid downloads | engine, temporary state |
+| payment | Optional support Checkout and signed webhook | engine, temporary state |
 | hardening | Bounds, deletion, rate limits, errors, analytics | all |
 Build and verify in that order. TypeScript strict; server-only workbook dependencies. Next.js App Router, React, CSS/Tailwind, Zod, Vitest and Playwright. Small pure functions; engine never knows HTTP or Stripe.
 
@@ -20,11 +20,12 @@ flowchart LR
   Correlation --> Plan[Immutable fix plan]
   Plan --> Store[Temporary store]
   Store --> Diagnosis[Free diagnosis]
-  Diagnosis --> Checkout[Stripe Checkout]
+  Diagnosis --> Fix[Patch original workbook]
+  Fix --> Download[Free XLSX + change report]
+  Fix --> Counts[Private anonymous daily totals]
+  Download --> Checkout[Optional Stripe support]
   Checkout --> Webhook[Signed webhook]
-  Webhook --> Paid
-  Paid --> Fix[Patch original workbook]
-  Fix --> Download[XLSX + change report]
+  Webhook --> Thanks[Support confirmed]
 ```
 
 ## Workbook library decision
@@ -38,10 +39,10 @@ Needed before real launch: original blank XLSX exported from Seller Center (US m
 
 ## State and privacy
 Single Node process, one replica, persistent mounted local volume; no database. TemporaryFileStore persists an atomic JSON record containing original bytes, issues, plan, opaque capability hash, expiry and payment state. Directory 0700/files 0600. Mutations serialized per process; atomic rename handles crash consistency. Restart preserves pending analyses and paid state. All spreadsheet-bearing records expire after at most 59 minutes; an in-process 30-second sweep plus startup/request cleanup enforces deletion while service runs. Mounted storage must not have backups/snapshots. When stopped no software cleanup can run: deployment must retain lifecycle cleanup or purge expired records before accepting traffic. No training, no AI calls, no routine manual access, no content logging. JSON change report expires too.
-Production minimum is one always-on Node instance with a private volume and HTTPS, not serverless/multiple replicas. Memory-only loses paid work on restart; SQLite adds no benefit for this serialized V0. Object storage adapter must provide conditional updates and lifecycle deletion before replacing local state. No unsupported claim that local storage works across replicas.
+Production minimum is one always-on Node instance with a private volume and HTTPS, not serverless/multiple replicas. Memory-only loses in-progress work on restart; SQLite adds no benefit for this serialized V0. Object storage adapter must provide conditional updates and lifecycle deletion before replacing local state. No unsupported claim that local storage works across replicas.
 
 ## Payments
-Random analysis ID and separate 256-bit bearer token; store token hash. Token stays in browser sessionStorage, sent in Authorization header, never Stripe metadata or query parameters. Stripe metadata holds only analysis ID. Server derives price/plan, creates idempotent Checkout, verifies signed raw webhook plus session ID, USD amount, mode, payment status. Only webhook sets PAID. Replays are safe. Paid generation is deterministic and idempotent. Late payments are refunded through Stripe with an idempotency key; no delayed payment methods. Checkout return page polls authenticated state; redirects never grant access. Test payment adapter requires non-production NODE_ENV and explicit PAYMENT_MODE=mock; it still exercises the signed webhook handler.
+Random analysis ID and separate 256-bit bearer token; store token hash. Token stays in browser sessionStorage, sent in Authorization header, never Stripe metadata or query parameters. Stripe metadata holds only analysis ID. Server derives price/plan, creates idempotent Checkout, verifies signed raw webhook plus session ID, USD amount, mode, payment status. Only webhook sets PAID. Replays are safe. Generation is free and deterministic; PAID only records optional support and never controls download access. Late payments are refunded through Stripe with an idempotency key; no delayed payment methods. Checkout return page polls authenticated state; redirects never grant access. Test payment adapter requires non-production NODE_ENV and explicit PAYMENT_MODE=mock; it still exercises the signed webhook handler.
 [Stripe fulfillment](https://docs.stripe.com/checkout/fulfillment), [Next route handlers](https://nextjs.org/docs/app/getting-started/route-handlers).
 
 ## Security
@@ -53,3 +54,20 @@ Recommend Railway Docker service + private volume, one replica, no sleep, reques
 
 ## Testing
 Vitest pure rule matrix, synthetic XLSX, independent ExcelJS reread, byte comparisons of all untouched ZIP entries, security regressions, server lifecycle and signed mock payment. Playwright actual HTTP upload and mocked-provider checkout; no real Stripe charges in CI. Production build plus lint/typecheck. No test bypass endpoint available in production.
+
+## Implementation limits made explicit
+The first schema adapter validates one declared item worksheet. Additional worksheets are preserved and security-checked, but catalog rows in them are not validated. Conditional requiredness and cross-sheet variant families are not supported. Field requirements must be unconditional in the reviewed adapter; do not advertise full category validation if omitted requirements matter. ZIP members over 16MB, total expansion over 64MB, >2,000 entries, >30 sheets, >150,000 cells or >10,000 items are refused. Two simultaneous upload requests are admitted, with engine/payment state mutations serialized. Download streaming is not yet optimized for much larger workbooks.
+
+Checkout expiry is derived from analysis creation (45 minutes), making retries use identical Stripe idempotency parameters even if the process restarts before persisting the response. The excluded payment method list reduces delayed methods; any late successful payment still takes the refund path. Configure the Stripe Dashboard methods for this short-retention product and test in that account before live launch.
+
+UI concept deviations: use the requested two-line hero and narrower utility column; correct the generated concept's erroneous PDF/TXT suggestion to XLSX/CSV; add a visible synthetic-preview disclosure and the requested configurable price. No concept image is shipped in the application. Browser plugin unavailable, so runtime QA uses Playwright Chromium.
+
+Stripe calls use a 10-second timeout and one network retry to bound payment waits and avoid blocking temporary-store cleanup indefinitely. Production CSP omits unsafe-eval; inline script allowance is retained for Next hydration. HTTPS termination must supply transport security headers appropriate to the deployment domain.
+
+
+## Free-download experiment and correction accounting
+The user changed monetization to free downloads plus voluntary support. Full proposed corrections and JSON reports are free. Signed Checkout confirmation records support only; cancellation, absent Stripe credentials and unpaid status cannot block downloading. Local mock support remains unavailable in production. Synthetic records still cannot receive real money.
+
+UsageLog stores a separate private atomic JSON snapshot at USAGE_LOG_PATH (Docker default /data/metrics/usage.json). Daily UTC real/synthetic corrected_files and corrections totals persist without spreadsheets. File sync plus atomic rename writes the increment and its deduplication receipt together; the shared single-process mutation lock serializes downloads. Hashes of random analysis IDs are used only as temporary receipts, pruned with analysis expiry. Receipts store no user/file content. If a process stops between logging and updating analysis.generated, a retry finds the receipt and does not double count. A failed log write emits correction_log_write_failed and still returns the file; a later download retries accounting. Such failures can cause undercounting if no retry occurs, so monitor that event. This metric counts server generation, not completed transport or Walmart acceptance.
+
+The existing 30-second cleanup also removes expired metric receipts while leaving aggregate daily counts. CLI npm run stats reads an atomic snapshot and prints totals/daily breakdown only; it does not expose temporary receipts or mutate the log. Keep one replica, private volume, and the metrics path outside the temporary spreadsheet directory. No database, public metrics endpoint or dashboard is introduced. Optional YES/NO/NOT_YET feedback is attributed to the UTC day of generation; edits replace the prior outcome rather than adding another case. Aggregates are explicitly user-reported and do not establish Walmart verification.

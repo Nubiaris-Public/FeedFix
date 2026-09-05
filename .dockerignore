@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.env*
+.feedfix
+playwright-report
+test-results
+
+.feedfix-metrics
+
+.next-e2e

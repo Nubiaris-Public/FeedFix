@@ -1,0 +1,481 @@
+@import "tailwindcss";
+:root {
+  --ink: #19232c;
+  --muted: #5c6570;
+  --green: #116344;
+  --border: #dce1e4;
+  --soft: #f8faf9;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+  background: #fff;
+  color: var(--ink);
+  font-family: Arial, Helvetica, sans-serif;
+  font-size: 15px;
+  line-height: 1.5;
+}
+header {
+  height: 78px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  max-width: 1180px;
+  margin: auto;
+  padding: 0 30px;
+}
+header span {
+  font-size: 13px;
+  color: var(--muted);
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  color: var(--ink);
+  font-size: 26px;
+  font-weight: 750;
+  text-decoration: none;
+  letter-spacing: -1px;
+}
+.brand svg {
+  color: var(--green);
+}
+main {
+  max-width: 760px;
+  margin: auto;
+  padding: 42px 28px 24px;
+}
+.intro {
+  text-align: center;
+  margin-bottom: 27px;
+}
+h1 {
+  font-size: 48px;
+  line-height: 1.1;
+  letter-spacing: -1.9px;
+  font-weight: 750;
+  margin: 0 0 20px;
+}
+h2 {
+  font-size: 21px;
+  letter-spacing: -0.5px;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+.intro p {
+  font-size: 18px;
+  color: var(--muted);
+  line-height: 1.5;
+  margin: 0;
+}
+.upload-section {
+  max-width: 608px;
+  margin: auto;
+}
+.dropzone {
+  border: 1.5px dashed #aab5b4;
+  border-radius: 12px;
+  background: var(--soft);
+  padding: 25px 16px 21px;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  position: relative;
+  transition: background 0.15s;
+}
+.dropzone.dragging {
+  background: #e5f3eb;
+  border-color: var(--green);
+}
+.dropzone svg {
+  color: #7e898c;
+  margin-bottom: 13px;
+}
+.dropzone strong {
+  font-size: 18px;
+  font-weight: 600;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+.file-label {
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+  margin: 4px 0 16px;
+}
+.dropzone input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  opacity: 0;
+}
+.dropzone:focus-within {
+  outline: 3px solid #94c5ac;
+  outline-offset: 3px;
+}
+small {
+  color: var(--muted);
+  font-size: 12px;
+}
+.report-picker {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 15px 0;
+}
+.report-picker summary {
+  cursor: pointer;
+}
+.report-picker label {
+  display: block;
+  margin: 12px 0 6px;
+}
+.report-picker input {
+  max-width: 100%;
+  font-size: 13px;
+}
+.primary,
+.secondary {
+  font: inherit;
+  display: block;
+  width: 100%;
+  border-radius: 7px;
+  cursor: pointer;
+  padding: 13px 16px;
+  text-align: center;
+}
+.primary {
+  background: var(--green);
+  color: white;
+  border: 1px solid var(--green);
+  font-weight: 600;
+  font-size: 16px;
+}
+.primary:hover {
+  background: #0c5036;
+}
+.primary:disabled,
+.secondary:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+.secondary {
+  border: 1px solid var(--border);
+  background: white;
+  color: var(--green);
+  margin-top: 10px;
+}
+.price-note {
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 9px 0;
+}
+.demo-note {
+  font-size: 12px;
+  color: #6b571c;
+  background: #fcf8e9;
+  border-radius: 6px;
+  padding: 9px 12px;
+  line-height: 1.5;
+}
+.steps {
+  display: flex;
+  justify-content: space-between;
+  max-width: 400px;
+  margin: 25px auto 21px;
+  padding: 0;
+  list-style: none;
+  position: relative;
+}
+.steps:before {
+  content: "";
+  border-top: 1px dashed #c7cece;
+  position: absolute;
+  left: 35px;
+  right: 35px;
+  top: 17px;
+  z-index: -1;
+}
+.steps li {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+  font-weight: 600;
+}
+.steps span {
+  width: 35px;
+  height: 35px;
+  border: 1px solid var(--green);
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: white;
+  color: var(--green);
+  font-size: 15px;
+}
+.privacy {
+  text-align: center;
+  font-size: 13px;
+  color: var(--muted);
+  margin: 20px 0;
+}
+.faq {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  max-width: 608px;
+  margin: auto;
+}
+.faq details + details {
+  border-top: 1px solid var(--border);
+}
+.faq summary {
+  padding: 13px 16px;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 13px;
+}
+.faq p {
+  font-size: 13px;
+  color: var(--muted);
+  padding: 0 16px 14px;
+  margin: 0;
+}
+footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 12px;
+  padding: 22px;
+  border-top: 1px solid var(--border);
+  margin-top: 10px;
+}
+.status:empty {
+  display: none;
+}
+.status {
+  font-size: 14px;
+  text-align: center;
+  margin-top: 15px;
+  color: var(--green);
+}
+.error {
+  background: #fff0ed;
+  border: 1px solid #e8c1b9;
+  border-radius: 8px;
+  color: #8d3022;
+  padding: 14px;
+  margin-top: 18px;
+  font-size: 14px;
+}
+.back {
+  color: var(--green);
+  display: inline-block;
+  margin-bottom: 25px;
+  font-size: 13px;
+}
+.results h1 {
+  font-size: 38px;
+  margin-bottom: 10px;
+}
+.result-sub {
+  color: var(--muted);
+  margin: 0 0 25px;
+}
+.counts {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+  padding: 22px 0;
+  margin: 25px 0 30px;
+  gap: 10px;
+}
+.counts strong {
+  display: block;
+  font-size: 30px;
+  line-height: 1.2;
+  font-weight: 650;
+}
+.counts span {
+  font-size: 12px;
+  color: var(--muted);
+}
+.counts > div:first-child strong {
+  color: var(--green);
+}
+.filter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  margin: 16px 0;
+}
+.filter select {
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 5px;
+  background: white;
+  color: var(--ink);
+}
+.issues article {
+  padding: 19px 0;
+  border-top: 1px solid var(--border);
+}
+.issue-location {
+  font-size: 12px;
+  color: var(--muted);
+  margin-bottom: 6px;
+  overflow-wrap: anywhere;
+}
+.issue-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.issue-heading h3 {
+  font-size: 16px;
+  font-weight: 600;
+  margin: 0;
+}
+.badge {
+  font-size: 10px;
+  font-weight: 650;
+  padding: 4px 7px;
+  border-radius: 4px;
+  white-space: nowrap;
+  background: #f0f2f3;
+  color: #505b64;
+}
+.badge.auto_fix {
+  background: #e6f3eb;
+  color: #176141;
+}
+.badge.needs_user_input {
+  background: #fff4dc;
+  color: #805710;
+}
+.badge.walmart_support {
+  background: #edf0fa;
+  color: #4a5689;
+}
+.issues p {
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.6;
+  margin: 7px 0 0;
+  overflow-wrap: anywhere;
+}
+.issues pre {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 12px;
+  background: var(--soft);
+  padding: 10px;
+  border-radius: 5px;
+}
+.purchase {
+  border: 1px solid var(--border);
+  background: var(--soft);
+  padding: 24px;
+  border-radius: 10px;
+  margin-top: 25px;
+}
+.purchase p {
+  font-size: 14px;
+  color: var(--muted);
+}
+.purchase small {
+  display: block;
+  text-align: center;
+  margin-top: 12px;
+}
+.text-button {
+  display: block;
+  margin: 12px auto;
+  background: none;
+  border: 0;
+  color: var(--green);
+  text-decoration: underline;
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+:focus-visible {
+  outline: 3px solid #7baf98;
+  outline-offset: 4px;
+}
+@media (max-width: 600px) {
+  header {
+    height: 64px;
+    padding: 0 20px;
+  }
+  .brand {
+    font-size: 23px;
+  }
+  header span {
+    font-size: 11px;
+  }
+  main {
+    padding: 30px 20px 22px;
+  }
+  h1 {
+    font-size: 36px;
+    letter-spacing: -1.3px;
+  }
+  .intro p {
+    font-size: 16px;
+  }
+  .desktop-break {
+    display: none;
+  }
+  .dropzone strong {
+    font-size: 16px;
+  }
+  .counts {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+  }
+  .issue-heading {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .purchase {
+    padding: 18px;
+  }
+  .results h1 {
+    font-size: 33px;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+  }
+}
+
+.support {
+  margin-top: 28px;
+  border-top: 1px solid var(--border);
+  padding-top: 22px;
+}
+.feedback {
+  margin: 24px 0 0;
+  border: 0;
+  padding: 0;
+}
+.feedback legend {
+  font-weight: 600;
+  font-size: 15px;
+}
+.feedback button[aria-pressed="true"] {
+  background: #e6f3eb;
+  border-color: var(--green);
+}
