@@ -57,6 +57,8 @@ Checkout may start during the first 15 minutes and expires 45 minutes after anal
 
 See [.env.example](.env.example). STRIPE_PRICE_AMOUNT is cents, not a Stripe Price ID. MAX_UPLOAD_MB is capped at 25; actual ZIP expansion, sheet and cell limits may reject smaller complex files. FILE_TTL_MINUTES accepts 45–59. TEMP_STORE_DIR needs private, persistent storage. ANALYTICS_ENABLED writes only allowlisted aggregate events to stdout; replace the Analytics adapter for another sink. No filenames, identifiers or cell contents are logged.
 
+Microsoft Clarity is integrated in the root layout and loads once across page navigation, after hydration. To enable it, set `CLARITY_PROJECT_ID` to the project ID from Clarity → Settings → Setup **before building**, then rebuild/redeploy. Leave it empty to disable browser tracking. This is independent of `ANALYTICS_ENABLED`, which controls server events. No additional npm package is required. The security policy allows Clarity's scripts, collection requests and tracking images, following [Microsoft's CSP documentation](https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-csp).
+
 ## Limits and launch evidence
 
 No live Stripe charge, official Walmart import, provider deployment or field performance measurement has been performed. Configure actual credentials locally; never put them in Git.

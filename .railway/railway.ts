@@ -40,7 +40,8 @@ export default defineRailway(() => {
       STRIPE_SECRET_KEY: preserve(),
       STRIPE_WEBHOOK_SECRET: preserve(),
       SCHEMA_PATH: preserve(),
-      ALLOW_SYNTHETIC_FIXTURES: preserve(),
+      // Public preview: only marked fictional fixtures until a reviewed schema exists.
+      ALLOW_SYNTHETIC_FIXTURES: "true",
       TRUSTED_IP_HEADER: preserve(),
     },
   });
