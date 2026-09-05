@@ -14,7 +14,12 @@ flowchart LR
   Browser --> Upload[Bounded upload]
   Upload --> Parser
   Schema --> Validator
-  Parser --> Validator
+  Parser --> Identification
+  Identification -->|Exact reviewed mapping| Validator
+  Identification -->|Structural candidate without mapping| NewTemplate[NEW_WALMART_TEMPLATE]
+  Identification -->|Insufficient evidence| Unknown[UNKNOWN_SPREADSHEET]
+  NewTemplate -->|Explicit consent| Study[Private 59-minute study copy]
+  Study -->|Separate optional consent| Callback[Private 30-day callback]
   Report --> Correlation
   Validator --> Correlation
   Correlation --> Plan[Immutable fix plan]
@@ -78,3 +83,14 @@ Railway implementation: `.railway/railway.ts` uses the official TypeScript SDK w
 ## Official schema compiler update
 
 The original schema-adapter limitations above describe V0. The official schema integration now preserves draft-07 field/array/conditional rules in a deterministic shared graph, uses explicit Excel mappings and whole-feed validation, verifies workbook structure after repair and gates support on current golden evidence. See [walmart-schema-integration.md](docs/walmart-schema-integration.md) for the current architecture and remaining mapping/real-workbook limitations.
+
+## Explicit upload outcomes
+`inspectUpload` runs the existing guarded OOXML parser before looking up a mapping. `matchTemplate` reuses validator header checks and throws a distinct `UnsupportedTemplateError`; only that mismatch enters structural identification. Configuration errors and validation/repair errors are not swallowed as new templates. With no production mapping, safe uploads can still be identified, without enabling synthetic mappings. `identifyWalmartWorkbook` checks the MP_ITEM version marker, Data Definitions headers, hidden metadata sheet and canonical core field headers together. Its observations come from the local legacy layout; it intentionally misses unfamiliar conventions rather than infer mappings. Sheet visibility is read-only parser metadata.
+
+`POST /api/analyze` has a discriminated result: `SUPPORTED` retains `analysis` and `token`; `NEW_WALMART_TEMPLATE` and `UNKNOWN_SPREADSHEET` return booleans `walmartDetected`, `supported:false`, `modified:false`, `studyShareAvailable`, `checkoutAvailable:false`, plus the existing contribution receipt. No analysis/token/plan/schema or template fingerprint is returned for either unsupported state. Invalid workbook parsing returns HTTP 400 `INVALID_OR_UNSAFE_FILE`; other request/configuration failures remain errors (`REQUEST_FAILED`), not successful template results.
+
+`POST /api/study-share` reuploads the browser-held original with `studyConsent`, repeats all security/identification checks, requires a new candidate and current consent, then calls the existing ContributionStore. Without opt-in, unknown bytes exist only in request memory, not retained server-side. The study copy's `templateIdentity` is a private header-only fingerprint plus declared version, never a production mapping. All private reports retain the original one-hour policy.
+
+`TemplateNotificationRequests` isolates the small local callback store. `POST /api/template-notification` validates a <=1 KiB strict JSON request containing email, consent version, study ID and deletion token. A still-live consented study copy authorizes the request; the server computes the layout key. A single atomic private JSON per study, max 1,000 records, expires within 30 days and survives workbook expiry. No raw file bytes/headers/merchant rows enter this store. Same-origin checks, bounded bodies, global rate limiting and a separate 10/minute notification bucket apply. Repeating the same request is idempotent without extending expiry; changing its address requires deletion first. `POST /api/notification-delete/<studyId>` accepts the private token even after workbook deletion. No email/list/read API or email transport exists. Only the existing single-instance filesystem/queue is used; no database or new service.
+
+See [workbook-study-copies.md](docs/workbook-study-copies.md) for retention, backup exclusions and the human approval path. New-template analytics are property-free; the existing strict property allowlist still filters all event payloads. The uploader/results and email UI are masked for Clarity and never passed to GA or the events endpoint.

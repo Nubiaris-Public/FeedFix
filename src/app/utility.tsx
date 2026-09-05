@@ -325,7 +325,7 @@ export default function FeedFix({
           <Link href="/supported-templates">Compatibility</Link>
         </nav>
       </header>
-      <main>
+      <main data-clarity-mask="true">
         {unmapped ? (
           <NewTemplateResult
             result={unmapped}
@@ -433,8 +433,8 @@ export default function FeedFix({
               {demo && (
                 <p className="demo-note">
                   Preview: current Walmart workbook compatibility has not yet
-                  been verified. Only explicitly configured layouts are
-                  accepted.
+                  been verified. Corrections require an explicitly configured
+                  layout; new layouts can be shared for review.
                 </p>
               )}
               <p className="price-note">
@@ -513,11 +513,14 @@ export default function FeedFix({
                   Your workbook is stored temporarily for analysis and checkout,
                   then automatically deleted within one hour. If you opt in, a
                   separate private copy of the original workbook is kept for up
-                  to one hour to study template structure, even if analysis
-                  fails. You can delete that study copy early using the button
-                  shown after upload. Processing reports are not included in the
-                  study copy. No AI training or Walmart account connection.
-                  Download before expiry.
+                  to one hour to study template structure, including new
+                  unsupported layouts. You can delete that study copy early
+                  using the button shown after upload. Processing reports are
+                  not included in the study copy. No AI training or Walmart
+                  account connection. Download before expiry. After sharing a
+                  new template, you may separately request a support
+                  notification. That optional email request is kept privately
+                  for up to 30 days.
                 </p>
               </details>
               <details>
@@ -528,7 +531,7 @@ export default function FeedFix({
                   XLSX up to {maxUpload} MB and 10,000 items.{" "}
                   {demo
                     ? "This preview accepts only the clearly marked synthetic fixtures in the repository."
-                    : "Only explicitly supported template versions are accepted."}{" "}
+                    : "Only explicitly supported versions can be corrected. New layouts can be shared privately for review."}{" "}
                   Macros, external links and encrypted workbooks are not
                   supported.
                 </p>

@@ -2,14 +2,16 @@ import { test, expect } from "@playwright/test";
 import { newTemplateBytes } from "../tests/helpers/new-template";
 async function upload(page: import("@playwright/test").Page, bytes: Buffer) {
   await page.goto("/");
-  await page
-    .locator("#workbook")
-    .setInputFiles({
-      name: "new-layout.xlsx",
-      mimeType:
-        "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      buffer: bytes,
-    });
+  await expect(page.getByRole("main")).toHaveAttribute(
+    "data-clarity-mask",
+    "true",
+  );
+  await page.locator("#workbook").setInputFiles({
+    name: "new-layout.xlsx",
+    mimeType:
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    buffer: bytes,
+  });
   const response = page.waitForResponse((r) =>
     r.url().endsWith("/api/analyze"),
   );
@@ -18,7 +20,7 @@ async function upload(page: import("@playwright/test").Page, bytes: Buffer) {
 }
 test("new template → opt-in private share → optional callback → early deletion", async ({
   page,
-}) => {
+}, info) => {
   const response = await upload(page, await newTemplateBytes());
   expect((await response.json()).status).toBe("NEW_WALMART_TEMPLATE");
   await expect(
@@ -44,6 +46,10 @@ test("new template → opt-in private share → optional callback → early dele
       name: "Thanks — this template is now under review",
     }),
   ).toBeVisible();
+  await page.screenshot({
+    path: `/tmp/feedfix-new-template-${info.project.name}.png`,
+    fullPage: true,
+  });
   await page.getByLabel("Email (optional)").fill("seller@example.test");
   await page.getByRole("button", { name: "Notify me", exact: true }).click();
   await expect(
@@ -80,7 +86,7 @@ test("declining sharing returns to the uploader without an error", async ({
   await declined;
   await expect(page.locator("#workbook")).toBeAttached();
   expect(shares).toBe(0);
-  await expect(page.getByRole("alert")).toHaveCount(0);
+  await expect(page.getByRole("main").getByRole("alert")).toHaveCount(0);
 });
 test("generic spreadsheets are honest results and corrupt XLSX stays an error", async ({
   page,

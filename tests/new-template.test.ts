@@ -288,3 +288,45 @@ it("drops private analytics properties and tolerates failed analytics", async ()
   expect((await upload()).status).toBe(200);
   setAnalytics({ track: () => {} });
 });
+
+it("does not disguise configuration failures as new-template or invalid-file results", async () => {
+  vi.stubEnv("SCHEMA_PATH", join(root, "missing-approved-mapping.json"));
+  try {
+    const response = await upload();
+    expect(response.status).toBe(400);
+    const result = await response.json();
+    expect(result.status).toBe("REQUEST_FAILED");
+    expect(result.error).not.toContain(root);
+  } finally {
+    vi.stubEnv("SCHEMA_PATH", "");
+  }
+});
+
+it("security-checks optional XLSX reports even for a new template", async () => {
+  const form = new FormData();
+  form.set("file", new File([new Uint8Array(bytes)], "template.xlsx"));
+  form.set("report", new File(["corrupt"], "report.xlsx"));
+  form.set("studyConsent", CONTRIBUTION_CONSENT_VERSION);
+  const before = await new ContributionStore().list();
+  const response = await handle(request("analyze", form));
+  expect(response.status).toBe(400);
+  expect((await response.json()).status).toBe("INVALID_OR_UNSAFE_FILE");
+  expect(await new ContributionStore().list()).toEqual(before);
+});
+
+it("refuses notification storage in public/analysis/study paths and symlinks", async () => {
+  for (const dir of [
+    "public/notifications",
+    join(root, "analysis", "contacts"),
+    join(root, "study", "contacts"),
+  ]) {
+    await expect(new LocalTemplateNotifications(dir).cleanup()).rejects.toThrow(
+      /private and separate/,
+    );
+  }
+  const { symlink } = await import("node:fs/promises");
+  await symlink(join(root, "notifications"), join(root, "notification-link"));
+  await expect(
+    new LocalTemplateNotifications(join(root, "notification-link")).cleanup(),
+  ).rejects.toThrow(/Invalid notification storage/);
+});

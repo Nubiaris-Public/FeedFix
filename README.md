@@ -94,4 +94,12 @@ Google indexing and Search Console: [SEO.md](SEO.md). Indexing is opt-in with `S
 
 ## Optional workbook study copies
 
-An unchecked upload option lets a user share the original workbook privately for up to one hour to help study template structure. Unsupported layouts can be retained with consent even when analysis fails. There is no permanent fixture ingestion or AI training. Copies begin as `UNKNOWN`, remain separate from analysis records, and can be deleted early by the uploader. Run `npm run walmart:uploads -- list` to find unexpired copies on the private host. See [the storage, retention and operator guide](docs/workbook-study-copies.md).
+An unchecked upload option lets a user share the original workbook privately for up to one hour to help study template structure. New Walmart layout candidates receive a useful identification result and can be shared with consent without creating a corrected file or checkout. Generic spreadsheets are described honestly; unsafe files remain errors. There is no permanent fixture ingestion or AI training. Copies begin as `UNKNOWN`, remain separate from analysis records, and can be deleted early by the uploader. Run `npm run walmart:uploads -- list` to find unexpired copies on the private host. See [the storage, retention and operator guide](docs/workbook-study-copies.md).
+
+
+## New Walmart template flow
+Upload any valid XLSX within the limits; the backend decides compatibility after security inspection. Supported mappings keep the existing analysis/download flow. A structurally corroborated but unmapped Walmart candidate gets “Walmart file detected”, optional “Share securely”, and an optional template-specific “Notify me” after sharing. This is not verified authenticity, version currency or Walmart acceptance.
+
+Callbacks use `NOTIFICATION_STORE_DIR` (local `.feedfix-notifications`, Docker `/data/template-notifications`), separate from `TEMP_STORE_DIR` and `CORPUS_STORE_DIR`, with private permissions and a maximum 30-day lifetime. No email is sent by this implementation. Keep the directory out of backups, public assets and build context; one always-on instance and the existing sweeper are required. Email is opt-in and excluded from analytics/logs. See [the operational privacy policy](docs/workbook-study-copies.md#optional-template-notification-callback).
+
+Regression coverage: `tests/new-template.test.ts` and `e2e/new-template.spec.ts` use explicitly synthetic structural candidates against real HTTP handlers on desktop/mobile. These tests do not establish real Walmart compatibility.

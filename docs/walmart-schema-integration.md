@@ -155,3 +155,40 @@ References used for implementation: local Next.js `node_modules/next/dist/docs/`
 - Source file is ignored by Git and absent from tracked files, standalone output and browser assets. Docker source exclusions and compiled-only runtime copy are configured; a Docker image was not built or deployed in this session.
 
 Machine-readable results: [walmart-validation-evidence.json](walmart-validation-evidence.json). These are technical PASS results for the stated checks. **Current real Walmart workbook compatibility remains unverified**, so no overall Walmart-compatibility PASS or real-payment eligibility is claimed. Candidate exploration is capped at 20 attempts and a 200,000 mapped-cell evaluation budget; exhausted searches leave findings for review.
+
+
+## New-template product outcome (September 2026)
+The engine remains fail-closed. Safe unknown uploads now pass through read-only structural identification after exact mapping checks. `NEW_WALMART_TEMPLATE` means multiple Walmart layout signals were found, **not** current compatibility, authenticated origin or successful validation. No fixes, corrected output, analysis capability or checkout exist for that result. `UNKNOWN_SPREADSHEET` avoids a false Walmart claim. Unsafe/corrupt workbooks remain rejected before study storage.
+
+The local legacy workbook informed conservative marker/metadata recognition (including its 30-character hidden-sheet convention); it was not promoted, rewritten or copied into new permanent fixtures. Generated regression candidates are explicitly `SYNTHETIC`. The compiled schema, compiler, source artifact and approved mappings are unchanged; supported uploads still reach the existing compiled validator and surgical patch/integrity path.
+
+Private sharing reuses ContributionStore with opt-in and 59-minute expiry. A separately consented, private 30-day notification callback may retain an email and header-only layout key, never workbook rows. No automatic email or automatic support promotion occurs. The [study operations guide](workbook-study-copies.md#reviewing-a-new-layout) explains the mandatory human review, separately authorized real evidence, explicit mapping and golden approval path. See [architecture](../ARCHITECTURE.md#explicit-upload-outcomes) for the API contract.
+
+### Verification of the new-template flow
+Executed against this workspace on 2026-09-05:
+
+| Command | Actual result |
+| --- | --- |
+| `npm run lint` | Exit 0 |
+| `npm run typecheck` | Exit 0 |
+| `npm test` | Exit 0; 123 tests, 13 files |
+| `npm run build` | Exit 0; production Next build |
+| `npm run test:e2e` | Exit 0; 16 desktop/mobile scenarios |
+| `npm run walmart:golden` | Exit 0; 7 SYNTHETIC goldens, including compiled schema-27 validation and package integrity |
+| `npm run walmart:schema:verify -- --input src/5.0.20260703-18_22_27-api_MP_ITEM_0_0_en.json --compiled data/walmart/compiled/5.0.20260703-18_22_27-api` | Exit 0; PASS, 8,753,777 scalar comparisons; source SHA-256 `408c412df0858c913d3d0e753ce7c80e8e8d9444c80cd55fb1247d9a54fad8ea` |
+
+The first browser run exposed a test selector that counted Next's global route-announcement alert. Scoping the assertion to FeedFix's `main` preserves the no-product-error assertion; the complete suite then passed. Initial identification tests also caught the legacy hidden-sheet truncation convention; the identifier now matches the observed 30-character name and requires actual hidden visibility. Additional tests cover config failures (not falsely labeled as new/unsafe), malicious reports on unsupported uploads, private directory boundaries, callback redaction, rate limits, independent expiry/deletion and no-consent behavior. Browser requests use the real backend and generated SYNTHETIC XLSX bytes; there are no new mocked analyze/share/notification responses.
+
+Read-only inspection of local `src/walmart.xlsx` returned a structural candidate. This is not proof that the file is authentic, current or accepted by Walmart. No real-current golden was added. The compiler/source artifacts and approved mappings were not modified.
+
+### Implementation file inventory
+- Engine: `src/engine/identify-workbook.ts`, `model.ts`, `workbook.ts`, `validate.ts` — read-only identification/visibility, typed invalid-file and mapping-mismatch boundaries; existing validation and patch behavior reused.
+- API/storage: `src/shared/upload-result.ts`, `src/server/service.ts`, `http.ts`, `contributions.ts`, `workbook-study.ts`, `template-notifications.ts`, `store.ts`, `analytics.ts` — explicit outcomes, existing study receipts, private callback adapter/sweeper and sanitized events.
+- Product UI: `src/app/new-template-result.tsx`, `utility.tsx`, `globals.css`, `supported-templates/page.tsx` — result/share/optional callback, private text masking, honest secondary compatibility copy.
+- Configuration: `.env.example`, `.gitignore`, `.dockerignore`, `Dockerfile`, `docker/entrypoint.sh`, `playwright.config.ts` — private notification directory and test isolation; no new infrastructure dependency.
+- Verification: `tests/helpers/new-template.ts`, `tests/new-template.test.ts`, `tests/contributions.test.ts`, `tests/stripe.test.ts`, `tests/walmart-golden.test.ts`, `e2e/new-template.spec.ts`, `e2e/seo.spec.ts` — new contract tests and existing callers adapted to discriminate the result.
+- Documentation: `PRODUCT.md`, `ARCHITECTURE.md`, `README.md`, this report and `docs/workbook-study-copies.md`.
+
+Remaining limits: conservative recognition intentionally misses other Walmart conventions; fingerprints cannot establish support. Callback addresses are syntax-validated but ownership is not verified, and no email is sent. Host outages and backups require deployment-level lifecycle controls; application TTLs alone cannot erase an offline disk. No production deployment, real email delivery or real-current Walmart acceptance test was performed for this task. One-hour sharing does not authorize retaining a permanent real golden fixture.
+
+Repository note: a concurrent commit `20abde4` incorporated implementation files during this work. No commit or push command was executed by this task. The final working-tree diff therefore shows only changes remaining after that commit, not the entire implementation inventory above.

@@ -15,7 +15,7 @@ Store only aggregate counts permanently. Hashed opaque deduplication receipts ex
 ## Supported issues
 GTIN length, digits, whitespace and checksum; schema-required empty fields; declared string length; controls; URLs; declared numbers and bounds; declared enums/booleans; empty/duplicate SKUs; explicit variant group consistency. External report normalization and exact row/column or unique SKU correlation.
 
-AUTO_FIX requires schema-authorized normalization and an unambiguous value. Checksum errors require input: mathematics alone cannot prove the correct product identifier. Missing URL protocol requires input. SKU trimming is diagnostic only because identity and collisions are risky. Unknown reports/templates are rejected with useful instructions.
+AUTO_FIX requires schema-authorized normalization and an unambiguous value. Checksum errors require input: mathematics alone cannot prove the correct product identifier. Missing URL protocol requires input. SKU trimming is diagnostic only because identity and collisions are risky. Unknown processing-report layouts still fail closed. Unknown workbook layouts receive an explicit identification result as described below; they never receive guessed repairs.
 
 ## Compatibility
 Bundled XLSX files are synthetic, visibly marked, not Walmart schemas. Development supports them by default. Production requires a reviewed schema JSON and an official representative workbook. Do not claim Walmart acceptance or complete validation. Unsupported categories/versions fail closed. No user-supplied schema upload.
@@ -24,8 +24,15 @@ Bundled XLSX files are synthetic, visibly marked, not Walmart schemas. Developme
 Authentication, users, organizations, teams, dashboard, subscriptions, OAuth, Walmart APIs, other marketplaces, AI/LLMs, ticketing, email marketing, admin, translations, mobile apps, extensions, scheduled product jobs, synchronization, enrichment, optimization, SEO content, recommendations.
 
 ## Analytics
-Only landing_view, file_selected, upload_completed, analysis_started, analysis_completed, issues_found, no_issues_found, checkout_started, payment_completed, corrected_file_generated, corrected_file_downloaded, analysis_failed. Allowlisted numeric aggregates and file_size_bucket only. Never filenames, SKU, GTIN, titles, cell contents, merchant details or bearer tokens. Analytics failures cannot fail requests.
+Only landing_view, file_selected, upload_completed, analysis_started, analysis_completed, issues_found, no_issues_found, checkout_started, payment_completed, corrected_file_generated, corrected_file_downloaded, analysis_failed, new_template_detected, unknown_spreadsheet_detected, template_share_offered, template_share_accepted, template_share_declined, template_notification_requested. Allowlisted numeric aggregates and file_size_bucket only. Never filenames, SKU, GTIN, titles, cell contents, merchant details, emails, sheet names, template fingerprints or bearer tokens. Analytics failures cannot fail requests.
 
 ## Acceptance / commands
 npm install; npm run dev; npm run lint; npm run typecheck; npm test; npm run test:e2e; npm run build.
 Unit rule cases plus parser/fix preservation/security tests. Integration verifies free downloads before payment, signed optional-support webhooks, idempotent correction counts, expiry, feedback and exact changes. Browser exercises desktop/mobile upload and payment return. LCP target <1.5s, CLS near zero; measure locally, not a field-performance guarantee.
+
+## New-template result and callback
+A safely parsed XLSX with corroborating MP_ITEM marker, definitions, hidden metadata and core field headers can return `NEW_WALMART_TEMPLATE`. This is a structural candidate, not authenticated Walmart provenance, current version verification or support. Show “Walmart file detected”, explain the unsupported layout and confirm that the original was not modified. No analysis record, corrections, download or checkout is created. A safe generic workbook returns `UNKNOWN_SPREADSHEET` with honest wording; corrupt/unsafe XLSX remains an error. The browser checks extension/size only; backend security and reviewed mapping decide compatibility.
+
+Sharing remains unchecked opt-in, using the existing private study store with a 59-minute expiry. The user can continue without sharing. After successful sharing, show “Thanks — this template is now under review”, without a delivery promise. No automatic mapping promotion occurs.
+
+A separate optional “Notify me” action consents to a private template-specific callback request for up to 30 days. It stores only email, structural template key, declared version, consent/expiry and deletion authorization in a separate private directory on the existing volume. No account, marketing, email transport or automatic sending is introduced. Emails never enter analytics/logs. The request can be removed while the tab retains its private receipt; otherwise it expires. This is an explicit, time-limited exception to anonymous aggregate-only persistence, not a change to workbook retention. See [study/privacy operations](docs/workbook-study-copies.md).

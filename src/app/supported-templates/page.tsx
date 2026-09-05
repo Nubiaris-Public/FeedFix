@@ -30,8 +30,9 @@ export default function SupportedTemplates() {
         </p>
         <p>
           Sharing an unsupported workbook for temporary study does not make it
-          supported. The upload result will tell you when a layout cannot be
-          analyzed.
+          supported. When several structural signals identify a Walmart layout
+          we do not support, the result offers optional private sharing. Your
+          original is unchanged and no corrections or checkout are offered.
         </p>
       </section>
       <section>
@@ -83,6 +84,17 @@ export default function SupportedTemplates() {
           You can delete the study copy early while its deletion control remains
           available. Automated cleanup runs while the service is operating;
           expired copies are cleaned on startup after an outage.
+        </p>
+      </section>
+      <section>
+        <h2>Optional template notifications</h2>
+        <p>
+          After sharing a new template, you can separately request an update
+          about support for that layout. We keep the email privately for up to
+          30 days, solely for this request. No account, newsletter or email is
+          automatically created or sent. You can remove the request while its
+          control remains available; otherwise it expires. Workbook copies still
+          expire within one hour.
         </p>
       </section>
       <section>
