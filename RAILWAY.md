@@ -7,10 +7,12 @@ One Docker service, one 1 GB volume, one always-on replica. No database. Downloa
 1. Push this repository to GitHub. Create a dedicated Railway project/environment for FeedFix.
 2. Install Railway CLI **5.42.1 or newer**, run `railway login`, then `railway link` to select that environment. Run `npm ci` in this repository.
 3. Run `railway config plan`, review the proposed `feedfix` service and `feedfix-data` volume, then `railway config apply`. The configuration is [.railway/railway.ts](.railway/railway.ts). Use a dedicated environment: omitted resources in this project-level definition can be deleted. For an existing populated environment, import its configuration first and merge intentionally.
-4. Connect the `feedfix` service to your GitHub repository in Railway, or upload with `railway up --service feedfix`. The source is intentionally omitted from IaC because the repository owner is not assumed.
+4. The `feedfix` service explicitly uses GitHub repository `Nubiaris-Public/FeedFix`, branch `master`. Grant Railway access to that repository. Update `source` in the IaC file if you deploy a fork or another branch.
 5. In the service networking settings, generate a public domain. Set `APP_URL` to its exact HTTPS origin, without a trailing slash. Redeploy after changing variables.
 
 Railway discovers the root Dockerfile. Keep Build/Start command overrides empty: the image builds Next.js and starts `node server.js` through its entrypoint. Do not use `npm start` for this standalone image. Railway supplies `PORT`; the server binds to `0.0.0.0`.
+
+If the Railway canvas shows a Bun Function, that is not the configured FeedFix runtime. Create/connect a GitHub repository service for this repository using its root Dockerfile, then attach the `/data` volume and settings below. Do not paste `.railway/railway.ts` into a Function editor: it is infrastructure configuration evaluated by `railway config plan/apply`. Review the plan before applying to an environment containing the existing Function; do not delete resources or volumes until the replacement is verified.
 
 The IaC SDK is a development dependency, not a second runtime service. Current Railway uses TypeScript IaC; legacy `railway.json`/`railway.toml` is deprecated. See [official IaC workflow](https://docs.railway.com/infrastructure-as-code) and [CLI installation](https://docs.railway.com/cli).
 

@@ -1,9 +1,17 @@
-import { defineRailway, project, service, volume, preserve } from "railway/iac";
+import {
+  defineRailway,
+  project,
+  service,
+  volume,
+  preserve,
+  github,
+} from "railway/iac";
 
 // One dedicated FeedFix environment. Preview with `railway config plan`.
 export default defineRailway(() => {
   const data = volume("feedfix-data", { region: "us-west2", sizeMB: 1024 });
   const web = service("feedfix", {
+    source: github("Nubiaris-Public/FeedFix", { branch: "master" }),
     build: { builder: "DOCKERFILE", dockerfilePath: "Dockerfile" },
     healthcheck: "/api/health",
     healthcheckTimeout: 60,
