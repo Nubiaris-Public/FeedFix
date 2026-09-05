@@ -1,3 +1,4 @@
+import { supportEvidence } from "../engine/evidence";
 import { getSchema } from "../engine/schema";
 import { parseWorkbook } from "../engine/workbook";
 import { validateWorkbook } from "../engine/validate";
@@ -19,6 +20,13 @@ export function publicAnalysis(a: Analysis) {
     itemCount: a.itemCount,
     sheetCount: a.sheetCount,
     synthetic: a.synthetic,
+    origin: a.origin ?? (a.synthetic ? "SYNTHETIC" : "UNKNOWN"),
+    paidSupportEligible: a.paidSupportEligible === true,
+    schemaVersion: a.schemaSnapshot?.version,
+    schemaSha256: a.schemaSha256,
+    validationScope: a.schemaSnapshot?.compiled
+      ? "COMPILED_OFFICIAL_SCHEMA"
+      : "SYNTHETIC_RULES",
     amount: a.amount,
     autoFixCount: a.plan.length,
     issues: a.issues,
@@ -48,7 +56,21 @@ export async function analyze(
     id = opaque(),
     token = opaque();
   // Prove generation is possible before offering a free download. This output is discarded.
-  if (plan.length) applyApprovedAutomaticFixes(workbook, plan);
+  const repaired = plan.length
+    ? applyApprovedAutomaticFixes(workbook, plan)
+    : original;
+  const revalidated = validateWorkbook(parseWorkbook(repaired), schema);
+  if (plan.length && buildFixPlan(revalidated.issues).length)
+    throw new Error("This repair did not reach an idempotent result.");
+  const remainingIssues = [
+    ...revalidated.issues,
+    ...issues.filter(
+      (i) =>
+        i.source === "WALMART" ||
+        (i.source === "BOTH" && i.resolution === "WALMART_SUPPORT"),
+    ),
+  ];
+  const evidence = supportEvidence(schema);
   const record: Analysis = {
     id,
     tokenHash: tokenHash(token),
@@ -60,6 +82,9 @@ export async function analyze(
     itemCount: result.itemCount,
     sheetCount: workbook.sheets.length,
     synthetic: schema.synthetic,
+    ...evidence,
+    schemaSnapshot: schema,
+    remainingIssues,
     status: "ANALYZED",
     amount: config().amount,
   };
@@ -85,12 +110,20 @@ export async function download(id: string, token: string, report = false) {
   if (!record.plan.length && !report)
     throw new Error("No automatic corrections are available for this file.");
   const content = report
-    ? Buffer.from(generateReport(record.plan, record.issues))
+    ? Buffer.from(
+        generateReport(record.plan, record.remainingIssues ?? record.issues),
+      )
     : applyApprovedAutomaticFixes(
         parseWorkbook(Buffer.from(record.original, "base64")),
         record.plan,
       );
   if (!report) {
+    const revalidated = validateWorkbook(
+      parseWorkbook(content),
+      record.schemaSnapshot ?? getSchema(),
+    );
+    if (buildFixPlan(revalidated.issues).length)
+      throw new Error("This repaired workbook failed revalidation.");
     // The durable receipt makes retries safe even if the process stops before store.put.
     try {
       const first = await new UsageLog().corrected(record, record.plan.length);

@@ -1,3 +1,4 @@
+import { verifyWorkbookIntegrity } from "./integrity";
 import type { FeedIssue, FixOperation, ParsedWorkbook } from "./model";
 import { checkedZip, xmlEscape } from "./workbook";
 export function buildFixPlan(issues: FeedIssue[]): FixOperation[] {
@@ -29,6 +30,7 @@ export function applyApprovedAutomaticFixes(
   workbook: ParsedWorkbook,
   plan: FixOperation[],
 ): Buffer {
+  if (!plan.length) return workbook.original;
   const zip = checkedZip(workbook.original),
     seen = new Set<string>(),
     changed = new Map<string, string>();
@@ -58,7 +60,9 @@ export function applyApprovedAutomaticFixes(
     );
   }
   for (const [p, xml] of changed) zip.updateFile(p, Buffer.from(xml));
-  return zip.toBuffer();
+  const output = zip.toBuffer();
+  verifyWorkbookIntegrity(workbook.original, output, plan);
+  return output;
 }
 export function generateReport(plan: FixOperation[], issues: FeedIssue[]) {
   return JSON.stringify(

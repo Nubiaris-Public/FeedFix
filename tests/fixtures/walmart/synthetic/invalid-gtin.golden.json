@@ -1,0 +1,21 @@
+{
+  "origin": "SYNTHETIC",
+  "schemaVersion": "SYNTHETIC-1",
+  "provenance": "Existing fictitious FeedFix workbook; not official Walmart evidence.",
+  "workbook": "../invalid-gtin.xlsx",
+  "fixtureSha256": "b94d3157be4239b2b3493f36c21fe855804a53b4a8f91921fb6365e607782f1f",
+  "expectedErrors": [
+    {
+      "code": "GTIN_CHECK_DIGIT",
+      "cell": "B3"
+    }
+  ],
+  "expectedRemainingErrors": [
+    {
+      "code": "GTIN_CHECK_DIGIT",
+      "cell": "B3"
+    }
+  ],
+  "expectedRepairs": [],
+  "allowedStructuralChanges": []
+}

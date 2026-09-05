@@ -14,6 +14,7 @@ ENV NODE_ENV=production HOSTNAME=0.0.0.0 PORT=3000 NEXT_TELEMETRY_DISABLED=1 TEM
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public
+COPY --from=build /app/data/walmart/compiled ./data/walmart/compiled
 COPY --from=build /app/stats.cjs ./stats.cjs
 COPY --chmod=755 docker/entrypoint.sh /usr/local/bin/feedfix-entrypoint
 EXPOSE 3000

@@ -41,7 +41,22 @@ it("creates server-priced idempotent Checkout and refunds a late confirmed payme
   );
   // Test only: emulate a reviewed template record to reach the real-provider branch.
   const record = await store.get(analysis.id);
-  await store.put({ ...record!, synthetic: false });
+  // Explicit provider-unit-test double, not a promoted fixture or golden evidence.
+  const evidenceModule = await import("../src/engine/evidence");
+  const evidenceMock = vi
+    .spyOn(evidenceModule, "supportEvidence")
+    .mockReturnValue({
+      origin: "WALMART_CURRENT_SUPPORTED",
+      paidSupportEligible: true,
+      schemaSha256: record!.schemaSha256,
+      mappingSha256: record!.mappingSha256!,
+    });
+  await store.put({
+    ...record!,
+    synthetic: false,
+    origin: "WALMART_CURRENT_SUPPORTED",
+    paidSupportEligible: true,
+  });
   createSession.mockResolvedValue({
     id: "cs_fixture",
     url: "https://checkout.stripe.com/test-fixture",
@@ -49,6 +64,13 @@ it("creates server-priced idempotent Checkout and refunds a late confirmed payme
   await download(analysis.id, token);
   await checkout(analysis.id, token);
   await checkout(analysis.id, token);
+  evidenceMock.mockReturnValueOnce({
+    origin: "WALMART_CURRENT_SUPPORTED",
+    paidSupportEligible: false,
+    schemaSha256: record!.schemaSha256,
+    mappingSha256: record!.mappingSha256!,
+  });
+  await expect(checkout(analysis.id, token)).rejects.toThrow(/evidence/);
   expect(createSession).toHaveBeenCalledTimes(1);
   const [params, options] = createSession.mock.calls[0];
   expect(params.mode).toBe("payment");
@@ -76,6 +98,7 @@ it("creates server-priced idempotent Checkout and refunds a late confirmed payme
     },
   } as unknown as import("stripe").default.Event;
   await fulfillEvent(event);
+  evidenceMock.mockRestore();
   expect(refund).toHaveBeenCalledWith(
     { payment_intent: "pi_fixture" },
     { idempotencyKey: "expired-cs_fixture" },

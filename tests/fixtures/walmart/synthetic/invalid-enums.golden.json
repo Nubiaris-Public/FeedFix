@@ -1,0 +1,27 @@
+{
+  "origin": "SYNTHETIC",
+  "schemaVersion": "SYNTHETIC-1",
+  "provenance": "Existing fictitious FeedFix workbook; not official Walmart evidence.",
+  "workbook": "../invalid-enums.xlsx",
+  "fixtureSha256": "72f9b2d7c8c85610960c9af3841965112d2834202c063aed62e25601e84ea259",
+  "expectedErrors": [
+    {
+      "code": "ENUM_NORMALIZE",
+      "cell": "F3"
+    }
+  ],
+  "expectedRemainingErrors": [],
+  "expectedRepairs": [
+    {
+      "cell": "F3",
+      "before": " yes ",
+      "after": "Yes"
+    }
+  ],
+  "allowedStructuralChanges": [
+    {
+      "sheet": "Synthetic Items",
+      "cell": "F3"
+    }
+  ]
+}

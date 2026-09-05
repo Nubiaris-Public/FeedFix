@@ -73,3 +73,8 @@ UsageLog stores a separate private atomic JSON snapshot at USAGE_LOG_PATH (Docke
 The existing 30-second cleanup also removes expired metric receipts while leaving aggregate daily counts. CLI npm run stats reads an atomic snapshot and prints totals/daily breakdown only; it does not expose temporary receipts or mutate the log. Keep one replica, private volume, and the metrics path outside the temporary spreadsheet directory. No database, public metrics endpoint or dashboard is introduced. Optional YES/NO/NOT_YET feedback is attributed to the UTC day of generation; edits replace the prior outcome rather than adding another case. Aggregates are explicitly user-reported and do not establish Walmart verification.
 
 Railway implementation: `.railway/railway.ts` uses the official TypeScript SDK with a Dockerfile builder, one replica, required `/data` volume, no sleep and zero deployment overlap. The entrypoint drops root after initializing mount permissions. `/api/health` checks directory access and starts cleanup. A bundled `stats.cjs` exposes only aggregate counts inside the container. See [RAILWAY.md](RAILWAY.md) for deployment and rollback.
+
+
+## Official schema compiler update
+
+The original schema-adapter limitations above describe V0. The official schema integration now preserves draft-07 field/array/conditional rules in a deterministic shared graph, uses explicit Excel mappings and whole-feed validation, verifies workbook structure after repair and gates support on current golden evidence. See [walmart-schema-integration.md](docs/walmart-schema-integration.md) for the current architecture and remaining mapping/real-workbook limitations.

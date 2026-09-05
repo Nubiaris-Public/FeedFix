@@ -127,6 +127,8 @@ export function correlate(
       column: e.column,
       code: e.code ?? "EXTERNAL",
       severity: "error",
+      level: "ERROR",
+      fixability: "REVIEW_REQUIRED",
       resolution:
         e.code && schema.report?.supportCodes.includes(e.code)
           ? "WALMART_SUPPORT"

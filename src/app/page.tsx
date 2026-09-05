@@ -1,6 +1,10 @@
 import FeedFix from "./utility";
 import { config } from "../server/config";
-import { homeMetadata, seoSettings } from "../server/seo";
+import {
+  homeMetadata,
+  seoSettings,
+  supportedWorkbookConfigured,
+} from "../server/seo";
 export const dynamic = "force-dynamic";
 export async function generateMetadata({
   searchParams,
@@ -32,7 +36,7 @@ export default function Home() {
       <FeedFix
         amount={c.amount}
         maxUpload={c.maxUpload}
-        demo={!process.env.SCHEMA_PATH}
+        demo={!supportedWorkbookConfigured()}
         mock={c.mock}
       />
     </>

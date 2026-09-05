@@ -1,6 +1,20 @@
 import { z } from "zod";
+export const evidenceOrigin = z.enum([
+  "SYNTHETIC",
+  "WALMART_LEGACY_REAL",
+  "WALMART_CURRENT_SUPPORTED",
+  "UNKNOWN",
+]);
+export type EvidenceOrigin = z.infer<typeof evidenceOrigin>;
 export const fieldDefinition = z.object({
   column: z.string().min(1),
+  canonicalPath: z.string().startsWith("/").optional(),
+  schemaPath: z.string().startsWith("#/").optional(),
+  displayName: z.string().optional(),
+  encoding: z.enum(["text", "number", "boolean", "json"]).optional(),
+  validation: z.record(z.string(), z.unknown()).optional(),
+  minLength: z.number().int().nonnegative().optional(),
+  pattern: z.string().optional(),
   type: z
     .enum(["string", "number", "boolean", "url", "gtin", "sku"])
     .optional(),
@@ -22,6 +36,16 @@ export const marketplaceSchema = z.object({
   version: z.string(),
   synthetic: z.boolean(),
   provenance: z.string(),
+  origin: evidenceOrigin.optional(),
+  compiled: z
+    .object({
+      directory: z.string().min(1),
+      sourceSha256: z.string().regex(/^[a-f0-9]{64}$/),
+      productType: z.string().min(1),
+      feedHeader: z.record(z.string(), z.unknown()),
+    })
+    .optional(),
+  goldenEvidencePath: z.string().optional(),
   sheet: z.string(),
   headerRow: z.number().int().positive(),
   marker: z.object({
@@ -60,7 +84,11 @@ export interface FeedIssue {
   sheet?: string;
   cell?: string;
   code: string;
-  severity: "error" | "warning";
+  severity: "error" | "warning" | "info";
+  level?: "ERROR" | "WARNING" | "INFO";
+  fixability?: "SAFE_AUTO_FIX" | "REVIEW_REQUIRED" | "UNSUPPORTED";
+  canonicalPath?: string;
+  schemaPath?: string;
   resolution: Resolution;
   title: string;
   description: string;

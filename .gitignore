@@ -11,3 +11,9 @@ playwright-report/
 .feedfix-metrics/
 
 .next-e2e/
+
+# Official Walmart source artifacts stay local; only compiled artifacts are tracked.
+data/walmart/source/*
+!data/walmart/source/README.md
+**/*-api_MP_ITEM_*.json
+**/*:Zone.Identifier

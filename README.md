@@ -2,7 +2,7 @@
 
 A compact, no-account utility: XLSX → free diagnosis → free corrected XLSX + auditable JSON changes → optional Stripe support.
 
-**Current compatibility: synthetic fixtures only.** No official Walmart template was present in this repository. The engine and funnel are implemented; real seller compatibility and the first voluntary support payment remain unvalidated. Synthetic files cannot trigger a real charge.
+**Current workbook compatibility: synthetic fixtures only.** The official Walmart `5.0.20260703-18_22_27-api` schema is now compiled and used by the runtime through explicit workbook mappings. No real current Walmart workbook was supplied, so current workbook compatibility and real seller acceptance remain unvalidated. Synthetic/legacy/unknown evidence cannot enable real support payments. See [the integration report](docs/walmart-schema-integration.md) for compiler commands, verification, golden fixtures and measured limits.
 
 ## Run locally
 
@@ -35,7 +35,7 @@ Webpack is explicitly selected because Turbopack's CSS worker required a socket 
 
 ## Production and real Stripe test mode
 
-1. Obtain and validate an official template/schema pair as described in [ARCHITECTURE.md](ARCHITECTURE.md). Create a reviewed schema JSON and set SCHEMA_PATH to its absolute path. `schema.synthetic.json` documents the adapter shape; its column names and constraints are fictitious. Changing its synthetic flag does not make it official.
+1. Obtain and validate an official template/schema pair as described in [ARCHITECTURE.md](ARCHITECTURE.md). Create a reviewed schema JSON and set SCHEMA_PATH to its absolute path. `schema.synthetic.json` documents the adapter shape; its column names and constraints are fictitious. Changing its synthetic flag does not make it official. Real mappings must bind a verified compiled schema and explicit current golden evidence before support payments are enabled.
 2. Set PAYMENT_MODE=stripe, STRIPE_SECRET_KEY (first `sk_test_…`), STRIPE_WEBHOOK_SECRET, APP_URL and STRIPE_PRICE_AMOUNT (integer USD cents, default 499).
 3. Forward Stripe webhooks for local testing:
    ```bash

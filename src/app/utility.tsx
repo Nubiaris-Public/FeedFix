@@ -9,6 +9,7 @@ type Analysis = {
   itemCount: number;
   sheetCount: number;
   synthetic: boolean;
+  paidSupportEligible?: boolean;
   amount: number;
   autoFixCount: number;
   issues: FeedIssue[];
@@ -348,8 +349,9 @@ export default function FeedFix({
               </button>
               {demo && (
                 <p className="demo-note">
-                  Preview: supports FeedFix’s synthetic fixtures only. Official
-                  Walmart templates are not yet enabled.
+                  Preview: current Walmart workbook compatibility has not yet
+                  been verified. Only explicitly configured layouts are
+                  accepted.
                 </p>
               )}
               <p className="price-note">
@@ -543,104 +545,111 @@ export default function FeedFix({
                   >
                     Download change report — free
                   </button>
-                  {analysis.generated && (
-                    <section className="support" aria-label="Optional support">
-                      <h2>Did FeedFix help?</h2>
-                      <p>
-                        Your download is free. If it saved you time, you can
-                        support FeedFix.
-                      </p>
-                      {analysis.status === "PAID" ? (
-                        <p role="status">Thank you for your support!</p>
-                      ) : mockCheckout && mock ? (
-                        <>
-                          <p className="demo-note">
-                            Local test support payment · No real charge
-                          </p>
+                  {analysis.generated &&
+                    (mock || analysis.paidSupportEligible) && (
+                      <section
+                        className="support"
+                        aria-label="Optional support"
+                      >
+                        <h2>Did FeedFix help?</h2>
+                        <p>
+                          Your download is free. If it saved you time, you can
+                          support FeedFix.
+                        </p>
+                        {analysis.status === "PAID" ? (
+                          <p role="status">Thank you for your support!</p>
+                        ) : mockCheckout && mock ? (
+                          <>
+                            <p className="demo-note">
+                              Local test support payment · No real charge
+                            </p>
+                            <button
+                              className="secondary"
+                              disabled={Boolean(busy)}
+                              onClick={finishMock}
+                            >
+                              Simulate optional payment
+                            </button>
+                          </>
+                        ) : (
                           <button
                             className="secondary"
                             disabled={Boolean(busy)}
-                            onClick={finishMock}
+                            onClick={pay}
                           >
-                            Simulate optional payment
-                          </button>
-                        </>
-                      ) : (
-                        <button
-                          className="secondary"
-                          disabled={Boolean(busy)}
-                          onClick={pay}
-                        >
-                          Support FeedFix — {money(analysis.amount)} (optional)
-                        </button>
-                      )}
-                      {notice.includes("confirmed") &&
-                        analysis.status !== "PAID" && (
-                          <button
-                            className="text-button"
-                            onClick={async () => {
-                              try {
-                                setAnalysis(
-                                  await (
-                                    await api("analysis/" + analysis.id)
-                                  ).json(),
-                                );
-                              } catch (e) {
-                                setError((e as Error).message);
-                              }
-                            }}
-                          >
-                            Refresh payment status
+                            Support FeedFix — {money(analysis.amount)}{" "}
+                            (optional)
                           </button>
                         )}
-                      <fieldset className="feedback">
-                        <legend>Did Walmart accept your corrected file?</legend>
-                        <p>
-                          Optional feedback, reported by you. This is not
-                          verified by Walmart.
-                        </p>
-                        {(
-                          [
-                            ["YES", "Yes"],
-                            ["NO", "No"],
-                            ["NOT_YET", "Haven’t tried yet"],
-                          ] as const
-                        ).map(([outcome, label]) => (
-                          <button
-                            key={outcome}
-                            type="button"
-                            className="secondary"
-                            aria-pressed={analysis.feedback === outcome}
-                            disabled={Boolean(busy)}
-                            onClick={async () => {
-                              setBusy("Saving your feedback…");
-                              setError("");
-                              try {
-                                setAnalysis(
-                                  await (
-                                    await api("feedback/" + analysis.id, {
-                                      method: "POST",
-                                      headers: {
-                                        "Content-Type": "application/json",
-                                      },
-                                      body: JSON.stringify({ outcome }),
-                                    })
-                                  ).json(),
-                                );
-                                setNotice("Thank you for your feedback.");
-                              } catch (e) {
-                                setError((e as Error).message);
-                              } finally {
-                                setBusy("");
-                              }
-                            }}
-                          >
-                            {label}
-                          </button>
-                        ))}
-                      </fieldset>
-                    </section>
-                  )}
+                        {notice.includes("confirmed") &&
+                          analysis.status !== "PAID" && (
+                            <button
+                              className="text-button"
+                              onClick={async () => {
+                                try {
+                                  setAnalysis(
+                                    await (
+                                      await api("analysis/" + analysis.id)
+                                    ).json(),
+                                  );
+                                } catch (e) {
+                                  setError((e as Error).message);
+                                }
+                              }}
+                            >
+                              Refresh payment status
+                            </button>
+                          )}
+                        <fieldset className="feedback">
+                          <legend>
+                            Did Walmart accept your corrected file?
+                          </legend>
+                          <p>
+                            Optional feedback, reported by you. This is not
+                            verified by Walmart.
+                          </p>
+                          {(
+                            [
+                              ["YES", "Yes"],
+                              ["NO", "No"],
+                              ["NOT_YET", "Haven’t tried yet"],
+                            ] as const
+                          ).map(([outcome, label]) => (
+                            <button
+                              key={outcome}
+                              type="button"
+                              className="secondary"
+                              aria-pressed={analysis.feedback === outcome}
+                              disabled={Boolean(busy)}
+                              onClick={async () => {
+                                setBusy("Saving your feedback…");
+                                setError("");
+                                try {
+                                  setAnalysis(
+                                    await (
+                                      await api("feedback/" + analysis.id, {
+                                        method: "POST",
+                                        headers: {
+                                          "Content-Type": "application/json",
+                                        },
+                                        body: JSON.stringify({ outcome }),
+                                      })
+                                    ).json(),
+                                  );
+                                  setNotice("Thank you for your feedback.");
+                                } catch (e) {
+                                  setError((e as Error).message);
+                                } finally {
+                                  setBusy("");
+                                }
+                              }}
+                            >
+                              {label}
+                            </button>
+                          ))}
+                        </fieldset>
+                      </section>
+                    )}
                 </>
               ) : (
                 <p>

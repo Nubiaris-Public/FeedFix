@@ -1,0 +1,233 @@
+{
+  "scope": "Compiler preservation and synthetic workbook execution; NOT current real Walmart workbook compatibility",
+  "schemaVersion": "5.0.20260703-18_22_27-api",
+  "sourceSha256": "408c412df0858c913d3d0e753ce7c80e8e8d9444c80cd55fb1247d9a54fad8ea",
+  "sourceBytes": 451013258,
+  "compiledBytes": 76824999,
+  "compiledAt": "2026-09-05T18:10:58.249Z",
+  "verification": {
+    "status": "PASS",
+    "comparedScalars": 8753777,
+    "source": {
+      "fields": 555627,
+      "productTypes": 6967,
+      "$schema": 193087,
+      "additionalProperties": 63698,
+      "type": 687873,
+      "title": 620339,
+      "properties": 114440,
+      "enum": 205116,
+      "required": 159560,
+      "minItems": 122422,
+      "items": 123065,
+      "oneOf": 1,
+      "allOf": 7774,
+      "if": 47337,
+      "then": 47337,
+      "description": 620332,
+      "examples": 321798,
+      "comments": 383970,
+      "minLength": 206998,
+      "maxLength": 206998,
+      "format": 29264,
+      "minimum": 78512,
+      "maximum": 78512,
+      "multipleOf": 43898,
+      "contains": 2213,
+      "anyOf": 124,
+      "not": 128
+    },
+    "compiled": {
+      "fields": 555627,
+      "productTypes": 6967,
+      "$schema": 193087,
+      "additionalProperties": 63698,
+      "type": 687873,
+      "title": 620339,
+      "properties": 114440,
+      "enum": 205116,
+      "required": 159560,
+      "minItems": 122422,
+      "items": 123065,
+      "oneOf": 1,
+      "allOf": 7774,
+      "if": 47337,
+      "then": 47337,
+      "description": 620332,
+      "examples": 321798,
+      "comments": 383970,
+      "minLength": 206998,
+      "maxLength": 206998,
+      "format": 29264,
+      "minimum": 78512,
+      "maximum": 78512,
+      "multipleOf": 43898,
+      "contains": 2213,
+      "anyOf": 124,
+      "not": 128
+    },
+    "omissions": {
+      "description": {
+        "count": 620332,
+        "reason": "Schema annotation only; no machine-readable assertion. Prose is not interpreted as a validation rule."
+      },
+      "examples": {
+        "count": 321798,
+        "reason": "Schema annotation only; no machine-readable assertion. Prose is not interpreted as a validation rule."
+      }
+    }
+  },
+  "reproducibility": {
+    "status": "PASS",
+    "method": "diff -qr across independently generated manifest, shard, index and product-type files"
+  },
+  "tests": {
+    "vitest": {
+      "passed": 91,
+      "files": 10
+    },
+    "playwright": {
+      "passed": 6,
+      "viewports": [
+        "desktop",
+        "mobile"
+      ]
+    },
+    "golden": {
+      "status": "PASS",
+      "results": [
+        {
+          "file": "tests/fixtures/walmart/synthetic/duplicate-sku.golden.json",
+          "format": "feedfix-golden-v1",
+          "status": "PASS",
+          "origin": "SYNTHETIC",
+          "schemaVersion": "SYNTHETIC-1",
+          "mappingSha256": "0825fba71231f4b573bbb7863814f86acfeb216f2adc20c512425c57b5974ad9",
+          "fixtureSha256": "4115532acaca84b1a54a9f31bec0a2fbfd4c1e81d3f028307322f98fe03a9343",
+          "findings": 2,
+          "repairs": 0,
+          "remaining": 2,
+          "integrity": {
+            "status": "PASS",
+            "entries": 17,
+            "changedCells": 0
+          }
+        },
+        {
+          "file": "tests/fixtures/walmart/synthetic/invalid-enums.golden.json",
+          "format": "feedfix-golden-v1",
+          "status": "PASS",
+          "origin": "SYNTHETIC",
+          "schemaVersion": "SYNTHETIC-1",
+          "mappingSha256": "0825fba71231f4b573bbb7863814f86acfeb216f2adc20c512425c57b5974ad9",
+          "fixtureSha256": "72f9b2d7c8c85610960c9af3841965112d2834202c063aed62e25601e84ea259",
+          "findings": 1,
+          "repairs": 1,
+          "remaining": 0,
+          "integrity": {
+            "status": "PASS",
+            "entries": 17,
+            "changedCells": 1
+          }
+        },
+        {
+          "file": "tests/fixtures/walmart/synthetic/invalid-gtin.golden.json",
+          "format": "feedfix-golden-v1",
+          "status": "PASS",
+          "origin": "SYNTHETIC",
+          "schemaVersion": "SYNTHETIC-1",
+          "mappingSha256": "0825fba71231f4b573bbb7863814f86acfeb216f2adc20c512425c57b5974ad9",
+          "fixtureSha256": "b94d3157be4239b2b3493f36c21fe855804a53b4a8f91921fb6365e607782f1f",
+          "findings": 1,
+          "repairs": 0,
+          "remaining": 1,
+          "integrity": {
+            "status": "PASS",
+            "entries": 17,
+            "changedCells": 0
+          }
+        },
+        {
+          "file": "tests/fixtures/walmart/synthetic/invalid-required.golden.json",
+          "format": "feedfix-golden-v1",
+          "status": "PASS",
+          "origin": "SYNTHETIC",
+          "schemaVersion": "SYNTHETIC-1",
+          "mappingSha256": "0825fba71231f4b573bbb7863814f86acfeb216f2adc20c512425c57b5974ad9",
+          "fixtureSha256": "1ff5feb8dcf3eff761e260781f3eebf7a93e41c441fa8890480f29df93576b94",
+          "findings": 1,
+          "repairs": 0,
+          "remaining": 1,
+          "integrity": {
+            "status": "PASS",
+            "entries": 17,
+            "changedCells": 0
+          }
+        },
+        {
+          "file": "tests/fixtures/walmart/synthetic/multiple-errors.golden.json",
+          "format": "feedfix-golden-v1",
+          "status": "PASS",
+          "origin": "SYNTHETIC",
+          "schemaVersion": "SYNTHETIC-1",
+          "mappingSha256": "0825fba71231f4b573bbb7863814f86acfeb216f2adc20c512425c57b5974ad9",
+          "fixtureSha256": "66fbf860d75663b24433de7fed3e5939d21e917d8fb9f2324c54c103e244de72",
+          "findings": 5,
+          "repairs": 2,
+          "remaining": 3,
+          "integrity": {
+            "status": "PASS",
+            "entries": 17,
+            "changedCells": 2
+          }
+        },
+        {
+          "file": "tests/fixtures/walmart/synthetic/schema-27.golden.json",
+          "format": "feedfix-golden-v1",
+          "status": "PASS",
+          "origin": "SYNTHETIC",
+          "schemaVersion": "5.0.20260703-18_22_27-api",
+          "schemaSha256": "408c412df0858c913d3d0e753ce7c80e8e8d9444c80cd55fb1247d9a54fad8ea",
+          "mappingSha256": "3b7c1fcdcebbeb0dc66e0a1bdb9184a46bb027258fec918583f68ed6f1ced390",
+          "fixtureSha256": "65a56ce2f1f5a7efb6a1b561eff646e9601775b6a9be30881d7a0984f99eb807",
+          "findings": 1,
+          "repairs": 1,
+          "remaining": 0,
+          "integrity": {
+            "status": "PASS",
+            "entries": 17,
+            "changedCells": 1
+          }
+        },
+        {
+          "file": "tests/fixtures/walmart/synthetic/valid.golden.json",
+          "format": "feedfix-golden-v1",
+          "status": "PASS",
+          "origin": "SYNTHETIC",
+          "schemaVersion": "SYNTHETIC-1",
+          "mappingSha256": "0825fba71231f4b573bbb7863814f86acfeb216f2adc20c512425c57b5974ad9",
+          "fixtureSha256": "f9bad4985266e0afd7e809ee9ab6e1e5f560734853241677605715b5f6407e74",
+          "findings": 0,
+          "repairs": 0,
+          "remaining": 0,
+          "integrity": {
+            "status": "PASS",
+            "entries": 17,
+            "changedCells": 0
+          }
+        }
+      ]
+    }
+  },
+  "checks": {
+    "typecheck": "PASS",
+    "lint": "PASS",
+    "productionBuild": "PASS",
+    "gitDiffCheck": "PASS",
+    "sourceGitIgnored": true,
+    "sourceAbsentFromStandaloneAndBrowserAssets": true
+  },
+  "currentSupportedRealWorkbooks": 0,
+  "legacyRealWorkbooks": 0,
+  "deploymentPerformed": false
+}

@@ -1,3 +1,4 @@
+import { validateOfficial } from "./validate-official";
 import { createHash } from "node:crypto";
 import type {
   FeedIssue,
@@ -57,6 +58,7 @@ export function validateWorkbook(
   workbook: ParsedWorkbook,
   schema: MarketplaceSchema,
 ): { issues: FeedIssue[]; itemCount: number } {
+  if (schema.compiled) return validateOfficial(workbook, schema);
   const { sheet, columns, rows } = table(workbook, schema);
   const issues: FeedIssue[] = [];
   const skuField = schema.fields.find((f) => f.type === "sku");
@@ -68,6 +70,18 @@ export function validateWorkbook(
       );
     issues.push({
       ...issue,
+      level:
+        issue.severity === "error"
+          ? "ERROR"
+          : issue.severity === "warning"
+            ? "WARNING"
+            : "INFO",
+      fixability:
+        issue.code === "FORMULA"
+          ? "UNSUPPORTED"
+          : issue.resolution === "AUTO_FIX"
+            ? "SAFE_AUTO_FIX"
+            : "REVIEW_REQUIRED",
       id: issueId([issue.sheet, issue.row, issue.column, issue.code]),
     });
   };

@@ -1,0 +1,11 @@
+{
+  "origin": "SYNTHETIC",
+  "schemaVersion": "SYNTHETIC-1",
+  "provenance": "Existing fictitious FeedFix workbook; not official Walmart evidence.",
+  "workbook": "../valid.xlsx",
+  "fixtureSha256": "f9bad4985266e0afd7e809ee9ab6e1e5f560734853241677605715b5f6407e74",
+  "expectedErrors": [],
+  "expectedRemainingErrors": [],
+  "expectedRepairs": [],
+  "allowedStructuralChanges": []
+}

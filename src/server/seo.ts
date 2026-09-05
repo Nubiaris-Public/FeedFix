@@ -1,3 +1,5 @@
+import { getSchema } from "../engine/schema";
+import { hasCurrentWorkbookSupport } from "../engine/evidence";
 import type { Metadata } from "next";
 
 export function seoSettings() {
@@ -10,9 +12,17 @@ export function seoSettings() {
   return { origin, indexable };
 }
 
+export function supportedWorkbookConfigured() {
+  try {
+    return hasCurrentWorkbookSupport(getSchema());
+  } catch {
+    return false;
+  }
+}
+
 export function homeMetadata(privateResult = false): Metadata {
   const { origin, indexable } = seoSettings();
-  const preview = !process.env.SCHEMA_PATH;
+  const preview = !supportedWorkbookConfigured();
   const title = preview
     ? "Walmart Item Setup File Checker — Preview | FeedFix"
     : "Free Walmart Item Setup File Checker | FeedFix";

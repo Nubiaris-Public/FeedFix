@@ -1,0 +1,65 @@
+{
+  "origin": "SYNTHETIC",
+  "schemaVersion": "SYNTHETIC-1",
+  "provenance": "Existing fictitious FeedFix workbook; not official Walmart evidence.",
+  "workbook": "../multiple-errors.xlsx",
+  "fixtureSha256": "66fbf860d75663b24433de7fed3e5939d21e917d8fb9f2324c54c103e244de72",
+  "expectedErrors": [
+    {
+      "code": "WHITESPACE",
+      "cell": "C3"
+    },
+    {
+      "code": "ENUM_NORMALIZE",
+      "cell": "F3"
+    },
+    {
+      "code": "GTIN_CHECK_DIGIT",
+      "cell": "B4"
+    },
+    {
+      "code": "URL_PROTOCOL",
+      "cell": "D4"
+    },
+    {
+      "code": "NUMBER_FORMAT",
+      "cell": "E4"
+    }
+  ],
+  "expectedRemainingErrors": [
+    {
+      "code": "GTIN_CHECK_DIGIT",
+      "cell": "B4"
+    },
+    {
+      "code": "URL_PROTOCOL",
+      "cell": "D4"
+    },
+    {
+      "code": "NUMBER_FORMAT",
+      "cell": "E4"
+    }
+  ],
+  "expectedRepairs": [
+    {
+      "cell": "C3",
+      "before": " Fictional blue cup ",
+      "after": "Fictional blue cup"
+    },
+    {
+      "cell": "F3",
+      "before": " yes ",
+      "after": "Yes"
+    }
+  ],
+  "allowedStructuralChanges": [
+    {
+      "sheet": "Synthetic Items",
+      "cell": "C3"
+    },
+    {
+      "sheet": "Synthetic Items",
+      "cell": "F3"
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+import { supportEvidence } from "../engine/evidence";
 import Stripe from "stripe";
 import { config } from "./config";
 import { authorize, store } from "./store";
@@ -25,6 +26,21 @@ export async function checkout(id: string, token: string) {
   if (record.synthetic && !c.mock)
     throw new Error(
       "Synthetic fixtures cannot receive real support payments. Configure a reviewed official template first.",
+    );
+  const currentEvidence =
+    !c.mock && record.schemaSnapshot
+      ? supportEvidence(record.schemaSnapshot)
+      : undefined;
+  if (
+    !c.mock &&
+    (record.origin !== "WALMART_CURRENT_SUPPORTED" ||
+      record.paidSupportEligible !== true ||
+      !currentEvidence?.paidSupportEligible ||
+      currentEvidence.schemaSha256 !== record.schemaSha256 ||
+      currentEvidence.mappingSha256 !== record.mappingSha256)
+  )
+    throw new Error(
+      "This analysis has no current supported Walmart workbook evidence. Real support payments are disabled.",
     );
   if (
     Date.now() - record.createdAt > 15 * 60000 ||

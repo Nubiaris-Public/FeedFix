@@ -9,3 +9,8 @@ test-results
 .feedfix-metrics
 
 .next-e2e
+
+# Never send official source artifacts to a production build.
+data/walmart/source
+**/*-api_MP_ITEM_*.json
+**/*:Zone.Identifier

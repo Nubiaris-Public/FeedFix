@@ -9,7 +9,12 @@ import {
 } from "node:fs/promises";
 import { join } from "node:path";
 import { randomBytes, createHash, timingSafeEqual } from "node:crypto";
-import type { FeedIssue, FixOperation } from "../engine/model";
+import type {
+  FeedIssue,
+  FixOperation,
+  MarketplaceSchema,
+  EvidenceOrigin,
+} from "../engine/model";
 import { UsageLog, type Outcome } from "./usage";
 import { config } from "./config";
 export interface Analysis {
@@ -23,6 +28,12 @@ export interface Analysis {
   itemCount: number;
   sheetCount: number;
   synthetic: boolean;
+  origin?: EvidenceOrigin;
+  paidSupportEligible?: boolean;
+  schemaSha256?: string;
+  mappingSha256?: string;
+  schemaSnapshot?: MarketplaceSchema;
+  remainingIssues?: FeedIssue[];
   status: "ANALYZED" | "PAID";
   amount: number;
   sessionId?: string;

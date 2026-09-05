@@ -1,0 +1,25 @@
+{
+  "origin": "SYNTHETIC",
+  "schemaVersion": "SYNTHETIC-1",
+  "provenance": "Existing fictitious FeedFix workbook; not official Walmart evidence.",
+  "workbook": "../duplicate-sku.xlsx",
+  "fixtureSha256": "4115532acaca84b1a54a9f31bec0a2fbfd4c1e81d3f028307322f98fe03a9343",
+  "expectedErrors": [
+    {
+      "code": "DUPLICATE_SKU"
+    },
+    {
+      "code": "DUPLICATE_SKU"
+    }
+  ],
+  "expectedRemainingErrors": [
+    {
+      "code": "DUPLICATE_SKU"
+    },
+    {
+      "code": "DUPLICATE_SKU"
+    }
+  ],
+  "expectedRepairs": [],
+  "allowedStructuralChanges": []
+}
