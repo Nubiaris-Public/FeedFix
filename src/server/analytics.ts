@@ -11,6 +11,12 @@ export const events = [
   "corrected_file_generated",
   "corrected_file_downloaded",
   "analysis_failed",
+  "new_template_detected",
+  "unknown_spreadsheet_detected",
+  "template_share_offered",
+  "template_share_accepted",
+  "template_share_declined",
+  "template_notification_requested",
 ] as const;
 export type AnalyticsEvent = (typeof events)[number];
 export interface Analytics {

@@ -1,3 +1,4 @@
+import { identifyWalmartWorkbook } from "../engine/identify-workbook";
 import { createHash } from "node:crypto";
 import { checkedZip, list, xmlParse } from "../engine/workbook";
 import type { ParsedWorkbook } from "../engine/model";
@@ -11,6 +12,7 @@ export function studyWorkbook(bytes: Buffer, workbook: ParsedWorkbook) {
   const clip = (value: string) => value.slice(0, 160);
   return {
     studyVersion: "1",
+    templateIdentity: identifyWalmartWorkbook(workbook),
     sourceSha256: createHash("sha256").update(bytes).digest("hex"),
     origin: "UNKNOWN",
     authenticity: "NOT_VERIFIED",

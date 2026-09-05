@@ -2,6 +2,12 @@
 
 ## Payment model
 
+**September 5, 2026 policy update:** the user approved separating voluntary support from Walmart compatibility evidence. After a corrected file is generated, support is available regardless of provenance. The app and Stripe Checkout disclose that payment does not guarantee Walmart acceptance or certify template compatibility. The workbook prerequisites below apply to adding real-template validation, not to accepting voluntary support.
+
+Deployed this policy to FeedFix in Railway deployment `44d19a23-8f15-4e46-9400-7088c35ff8ca` (SUCCESS). Production verification generated a free corrected download from a labeled synthetic fixture and opened an actual USD 4.99 Stripe Checkout Session. Repeating the request returned the same Checkout URL; the analysis remained unpaid. No payment was completed. The session expires through the existing Checkout expiry policy.
+
+Validation: 110 unit/integration tests, 8 desktop/mobile browser scenarios, lint, TypeScript and production build passed. The development browser run emitted a Next.js router-initialization message during SEO navigation; the payment scenarios passed. Signed-webhook verification was previously checked in production. Actual charge completion and live refund execution remain untested.
+
 FeedFix's current product scope offers free diagnosis, corrections and downloads, followed by optional **$4.99 USD one-time support**. There is no subscription or payment gate. The server snapshots `STRIPE_PRICE_AMOUNT=499` into each analysis and creates a Stripe-hosted Checkout Session after the corrected workbook has been generated.
 
 Checkout creates its product and price inline. No pre-created Product, Price ID, Payment Link, publishable key or Billing plan is required. A standalone Payment Link would bypass the analysis/session verification used by this integration.
@@ -29,7 +35,7 @@ The Stripe connector's account access does not populate the application's API ke
 ## Setup sequence
 
 1. Select the Stripe account and mode. The user confirmed **Nubiaris in live mode** (`acct_1TuLOTFDy6uvJQBt`) for the existing USD 4.99 optional-support model on September 5, 2026. Do not use test cards in live mode.
-2. Complete the reviewed official-workbook roundtrip and golden evidence described in [the schema integration guide](walmart-schema-integration.md). Setting keys alone cannot enable payments for synthetic or unsupported workbooks. Do not change evidence flags to bypass this requirement.
+2. Complete the reviewed official-workbook roundtrip and golden evidence described in [the schema integration guide](walmart-schema-integration.md). This is required for adding real-template validation, not for voluntary support. Unsupported layouts still cannot be analyzed; evidence flags must not be fabricated.
 3. Create a restricted sandbox key and configure the local values above. Install/authenticate Stripe CLI against that sandbox, then forward these events:
 
    ```bash
@@ -49,10 +55,16 @@ Checkout can start within 15 minutes of analysis creation and expires at creatio
 - Existing code implements hosted Checkout, server-side pricing, signed webhooks and late-payment refunds.
 - The local `.env` has empty Stripe API and webhook secrets and an empty `SCHEMA_PATH`.
 - Created live webhook `we_1UCOqyFDy6uvJQBtJOjKBBxi` at `https://feedfix.app/api/webhook`, with the two Checkout events above and API version `2026-08-26.dahlia`, matching the installed SDK. No previous webhook endpoints existed in this account.
-- Saved and verified its signing secret in Railway project `8dc0aec0-daa2-4724-a8d1-e914c6c98e46` (Homire), environment `FeedFix` (`56ed7837-95c0-419b-b0c1-854fae8d60f5`), service `feedfix` (`ee8943cc-40d1-4b34-845d-7c73e9adbae8`). The secret is not stored in this repository. The variable update used `--skip-deploys`; runtime activation still requires redeployment.
-- Verified Railway already has `APP_URL=https://feedfix.app`, `PAYMENT_MODE=stripe`, and `STRIPE_PRICE_AMOUNT=499`. `STRIPE_SECRET_KEY` and `SCHEMA_PATH` are absent.
-- The connector cannot create a restricted API key. The operator must create it in the selected Stripe account and save it directly as `STRIPE_SECRET_KEY` in the specific Railway service above. Do not paste it into chat or commit it.
-- No real charge or deployment was performed. Activation requires the API key, reviewed workbook evidence, redeployment and runtime validation. Local mock mode remains available for synthetic fixture testing.
+- Saved and verified its signing secret in Railway project `8dc0aec0-daa2-4724-a8d1-e914c6c98e46` (Homire), environment `FeedFix` (`56ed7837-95c0-419b-b0c1-854fae8d60f5`), service `feedfix` (`ee8943cc-40d1-4b34-845d-7c73e9adbae8`). The secret is not stored in this repository.
+- Verified Railway has `APP_URL=https://feedfix.app`, `PAYMENT_MODE=stripe`, and `STRIPE_PRICE_AMOUNT=499`. The operator added `STRIPE_SECRET_KEY` directly. A read-only Stripe account request returned HTTP 200, matched Nubiaris, and reported `charges_enabled=true`.
+- Deployment `6ed31661-bc2e-408b-91da-79cba2d8c1e7` succeeded after the variables were updated. Production `/api/health` returned 200. A signed, ignored configuration-probe event returned 200 from `/api/webhook`; the same payload with an invalid signature returned 400. This verifies active signing-secret configuration without creating a payment or changing fulfillment state. No extra redeployment was necessary.
+- `SCHEMA_PATH` remains absent. Real workbook validation remains unavailable pending a reviewed mapping. Voluntary support no longer depends on that evidence. No real charge was performed; Checkout creation, refund permissions and end-to-end Stripe delivery have not been verified against the live provider. Local mock mode remains available for synthetic fixture testing.
+
+### Workbook activation inspection
+
+Inspected the available `src/walmart.xlsx` on September 5, 2026. Its candidate item sheet declares `5.0.20240827-15_55_15`, while the compiled API schema is `5.0.20260703-18_22_27-api`. The item sheet has 123 candidate columns and zero populated data rows after row 6. Repeated fields include `keyFeatures`, `productSecondaryImageURL`, `measure`, `unit`, and `variantAttributeNames`; these require an explicit repeated-column adapter beyond the current JSON-cell encoding. The workbook contains a hidden sheet with 50 tables, 18 item-sheet merged ranges and 49 validation rules that roundtrip tests must preserve.
+
+This is an unverified older-layout candidate, not current-workbook golden evidence. No production mapping or PASS report was fabricated, and `SCHEMA_PATH` was not changed. Activation needs a current Seller Center workbook with representative rows, confirmed source/version/category, reviewed column encodings and a passing golden roundtrip. The remote private-study listing could not be inspected because Railway SSH has no registered key; no statement about the presence or absence of remote study copies is implied.
 
 ## References
 

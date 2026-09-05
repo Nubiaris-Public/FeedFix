@@ -1,3 +1,10 @@
+import { parseWorkbook, InvalidWorkbookError } from "../engine/workbook";
+import {
+  LocalTemplateNotifications,
+  notificationInput,
+} from "./template-notifications";
+import { inspectUpload } from "./service";
+import { CONTRIBUTION_CONSENT_VERSION } from "../shared/contribution-consent";
 import { ContributionStore } from "./contributions";
 import type { ContributionReceipt } from "../shared/contribution-consent";
 import { outcomeSchema } from "./usage";
@@ -8,19 +15,20 @@ import { checkout, mockPayment, webhook } from "./payment";
 import { events, track } from "./analytics";
 let uploadsInFlight = 0;
 const rates = new Map<string, { count: number; until: number }>();
-function rateLimit(request: Request) {
+function rateLimit(request: Request, scope = "general", limit = 90) {
   const header = process.env.TRUSTED_IP_HEADER;
   const ip = header
     ? (request.headers.get(header) ?? "shared").split(",")[0].trim()
     : "shared";
+  const rateKey = scope + ":" + ip;
   const now = Date.now();
   for (const [key, v] of rates) if (v.until < now) rates.delete(key);
-  if (rates.size > 10000 && !rates.has(ip))
+  if (rates.size > 10000 && !rates.has(rateKey))
     throw new Error("Too many requests. Please wait a minute.");
-  const value = rates.get(ip) ?? { count: 0, until: now + 60000 };
+  const value = rates.get(rateKey) ?? { count: 0, until: now + 60000 };
   value.count++;
-  rates.set(ip, value);
-  if (value.count > 90)
+  rates.set(rateKey, value);
+  if (value.count > limit)
     throw new Error("Too many requests. Please wait a minute.");
 }
 export async function boundedBody(request: Request, max: number) {
@@ -46,10 +54,12 @@ export async function boundedBody(request: Request, max: number) {
 function fileCheck(file: File, report = false) {
   const extension = file.name.split(".").pop()?.toLowerCase();
   if (!file.size || file.size > config().maxUpload * 1024 * 1024)
-    throw new Error(`Choose a non-empty file under ${config().maxUpload} MB.`);
+    throw new InvalidWorkbookError(
+      `Choose a non-empty file under ${config().maxUpload} MB.`,
+    );
   const allowed = report ? ["xlsx", "csv"] : ["xlsx"];
   if (!extension || !allowed.includes(extension))
-    throw new Error(
+    throw new InvalidWorkbookError(
       report
         ? "Choose an XLSX or CSV processing report."
         : "Choose an XLSX workbook. XLS and XLSM are not supported.",
@@ -69,7 +79,9 @@ function fileCheck(file: File, report = false) {
           "",
         ];
   if (!mimes.includes(file.type))
-    throw new Error("File type does not match an allowed spreadsheet.");
+    throw new InvalidWorkbookError(
+      "File type does not match an allowed spreadsheet.",
+    );
   return extension as "csv" | "xlsx";
 }
 const json = (body: unknown, status = 200) =>
@@ -105,6 +117,38 @@ export async function handle(request: Request) {
         },
         403,
       );
+    if (action === "template-notification" && request.method === "POST") {
+      rateLimit(request, "notification", 10);
+      const parsed = notificationInput.safeParse(
+        JSON.parse((await boundedBody(request, 1024)).toString()),
+      );
+      if (!parsed.success)
+        return json(
+          {
+            error:
+              "Enter a valid email and accept the notification privacy terms.",
+          },
+          400,
+        );
+      const result = await exclusive(async () => {
+        const template = await new ContributionStore().notificationTemplate(
+          parsed.data.studyId,
+          parsed.data.deleteToken,
+        );
+        return new LocalTemplateNotifications().request(parsed.data, template);
+      });
+      track("template_notification_requested");
+      return json(result, 201);
+    }
+    if (action === "notification-delete" && request.method === "POST") {
+      const data = JSON.parse((await boundedBody(request, 512)).toString());
+      if (typeof data.deleteToken !== "string")
+        return json({ error: "This deletion link is invalid." }, 400);
+      await exclusive(() =>
+        new LocalTemplateNotifications().delete(id, data.deleteToken),
+      );
+      return json({ deleted: true });
+    }
     if (action === "contribution" && request.method === "POST") {
       const data = JSON.parse((await boundedBody(request, 512)).toString());
       if (typeof data.deleteToken !== "string")
@@ -118,12 +162,17 @@ export async function handle(request: Request) {
       const data = JSON.parse((await boundedBody(request, 2048)).toString());
       if (
         events.includes(data.event) &&
-        ["landing_view", "file_selected"].includes(data.event)
+        ["landing_view", "file_selected", "template_share_declined"].includes(
+          data.event,
+        )
       )
         track(data.event, data.properties ?? {});
       return json({ ok: true });
     }
-    if (action === "analyze" && request.method === "POST") {
+    if (
+      ["analyze", "study-share"].includes(action) &&
+      request.method === "POST"
+    ) {
       if (uploadsInFlight >= 2)
         throw new Error("FeedFix is busy. Please retry in a moment.");
       uploadsInFlight++;
@@ -153,6 +202,7 @@ export async function handle(request: Request) {
             extension,
           };
         }
+        if (reportData?.extension === "xlsx") parseWorkbook(reportData.buffer);
         track("upload_completed", {
           file_size_bucket:
             file.size < 1024 * 1024
@@ -165,6 +215,18 @@ export async function handle(request: Request) {
         return json(
           await exclusive(async () => {
             const version = form.get("studyConsent");
+            const result =
+              action === "study-share"
+                ? inspectUpload(original).unsupported
+                : await analyze(original, reportData);
+            if (
+              action === "study-share" &&
+              (result?.status !== "NEW_WALMART_TEMPLATE" ||
+                version !== CONTRIBUTION_CONSENT_VERSION)
+            )
+              throw new Error(
+                "Choose a new Walmart template and explicitly agree to share it.",
+              );
             try {
               contribution = await new ContributionStore().save(
                 original,
@@ -174,7 +236,12 @@ export async function handle(request: Request) {
               contribution = { status: "unavailable" };
               console.warn(JSON.stringify({ event: "study_copy_unavailable" }));
             }
-            return { ...(await analyze(original, reportData)), contribution };
+            if (
+              result?.status === "NEW_WALMART_TEMPLATE" &&
+              contribution.status === "saved"
+            )
+              track("template_share_accepted");
+            return { ...result, contribution };
           }),
         );
       } finally {
@@ -226,6 +293,17 @@ export async function handle(request: Request) {
         { error: "Webhook could not be verified or fulfilled." },
         400,
       );
+    if (["template-notification", "notification-delete"].includes(action))
+      return json(
+        {
+          error: /Too many/.test(error instanceof Error ? error.message : "")
+            ? "Too many requests. Please wait a minute."
+            : "We could not save or update this notification request. Check the address and that your study copy has not expired.",
+        },
+        /Too many/.test(error instanceof Error ? error.message : "")
+          ? 429
+          : 400,
+      );
     const message = error instanceof Error ? error.message : "";
     const safe =
       /^(Download |Thank you |This |Choose |Upload |No |Too |FeedFix |Complete |Synthetic |Checkout |Test payments |Start checkout |There are |Processing |Invalid |Duplicate |Report |Workbook |File type |Macros|External |The |We couldn't|Fix precondition)/.test(
@@ -234,6 +312,14 @@ export async function handle(request: Request) {
     return json(
       {
         ...(contribution ? { contribution } : {}),
+        ...(["analyze", "study-share"].includes(action)
+          ? {
+              status:
+                error instanceof InvalidWorkbookError
+                  ? "INVALID_OR_UNSAFE_FILE"
+                  : "REQUEST_FAILED",
+            }
+          : {}),
         error: safe
           ? message
           : "We couldn't process this file. Make sure you're uploading the original supported XLSX workbook and try again.",

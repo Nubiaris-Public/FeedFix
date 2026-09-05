@@ -17,3 +17,6 @@ data/walmart/source
 
 # Private, consented one-hour workbook study copies.
 .feedfix-study/
+
+# Private, time-limited template contact requests.
+.feedfix-notifications/

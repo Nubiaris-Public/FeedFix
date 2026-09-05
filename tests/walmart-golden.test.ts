@@ -20,7 +20,7 @@ it.each([
   "UNKNOWN",
   "WALMART_CURRENT_SUPPORTED",
 ] as EvidenceOrigin[])(
-  "%s cannot enable money without explicit matching current evidence",
+  "%s cannot claim current workbook support without matching evidence",
   (origin) => {
     expect(
       supportEvidence({
@@ -52,7 +52,7 @@ it("a passing synthetic golden report cannot become current support evidence", (
     }).paidSupportEligible,
   ).toBe(false);
 });
-it("production HTTP pipeline actually uses compiled official assertions and blocks real support", async () => {
+it("production pipeline uses compiled assertions without claiming current workbook support", async () => {
   const directory = mkdtempSync(join(tmpdir(), "feedfix-official-http-"));
   vi.stubEnv(
     "SCHEMA_PATH",
@@ -61,12 +61,14 @@ it("production HTTP pipeline actually uses compiled official assertions and bloc
   vi.stubEnv("TEMP_STORE_DIR", directory);
   vi.stubEnv("USAGE_LOG_PATH", join(directory, "metrics.json"));
   vi.stubEnv("PAYMENT_MODE", "stripe");
+  vi.stubEnv("STRIPE_SECRET_KEY", "");
   vi.stubEnv("NODE_ENV", "production");
   const { analyze, download } = await import("../src/server/service");
   const { checkout } = await import("../src/server/payment");
   const result = await analyze(
     readFileSync("tests/fixtures/walmart/synthetic/schema-27.xlsx"),
   );
+  if (result.status !== "SUPPORTED") throw Error("Expected supported fixture");
   expect(result.analysis.validationScope).toBe("COMPILED_OFFICIAL_SCHEMA");
   expect(result.analysis.schemaSha256).toHaveLength(64);
   expect(result.analysis.autoFixCount).toBe(1);
@@ -76,7 +78,7 @@ it("production HTTP pipeline actually uses compiled official assertions and bloc
     [],
   );
   await expect(checkout(result.analysis.id, result.token)).rejects.toThrow(
-    /Synthetic/,
+    /Checkout is not configured/,
   );
   const { store } = await import("../src/server/store");
   const record = await store.get(result.analysis.id);
@@ -87,7 +89,7 @@ it("production HTTP pipeline actually uses compiled official assertions and bloc
   ] as EvidenceOrigin[]) {
     await store.put({ ...record!, synthetic: false, origin });
     await expect(checkout(result.analysis.id, result.token)).rejects.toThrow(
-      /evidence/,
+      /Checkout is not configured/,
     );
   }
   rmSync(directory, { recursive: true, force: true });

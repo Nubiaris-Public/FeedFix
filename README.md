@@ -2,7 +2,7 @@
 
 A compact, no-account utility: XLSX → free diagnosis → free corrected XLSX + auditable JSON changes → optional Stripe support.
 
-**Current workbook compatibility: synthetic fixtures only.** The official Walmart `5.0.20260703-18_22_27-api` schema is now compiled and used by the runtime through explicit workbook mappings. No real current Walmart workbook was supplied, so current workbook compatibility and real seller acceptance remain unvalidated. Synthetic/legacy/unknown evidence cannot enable real support payments. See [the integration report](docs/walmart-schema-integration.md) for compiler commands, verification, golden fixtures and measured limits.
+**Current workbook compatibility: synthetic fixtures only.** The official Walmart `5.0.20260703-18_22_27-api` schema is now compiled and used by the runtime through explicit workbook mappings. No real current Walmart workbook was supplied, so current workbook compatibility and real seller acceptance remain unvalidated. Optional support after a free corrected download is independent of compatibility evidence; it does not certify Walmart acceptance. See [the integration report](docs/walmart-schema-integration.md) for compiler commands, verification, golden fixtures and measured limits.
 
 ## Run locally
 
@@ -37,7 +37,7 @@ Webpack is explicitly selected because Turbopack's CSS worker required a socket 
 
 See [the Stripe payment plan and setup guide](docs/stripe-setup.md) for account selection, exact variables, webhook events and activation checks.
 
-1. Obtain and validate an official template/schema pair as described in [ARCHITECTURE.md](ARCHITECTURE.md). Create a reviewed schema JSON and set SCHEMA_PATH to its absolute path. `schema.synthetic.json` documents the adapter shape; its column names and constraints are fictitious. Changing its synthetic flag does not make it official. Real mappings must bind a verified compiled schema and explicit current golden evidence before support payments are enabled.
+1. Obtain and validate an official template/schema pair as described in [ARCHITECTURE.md](ARCHITECTURE.md). Create a reviewed schema JSON and set SCHEMA_PATH to its absolute path. `schema.synthetic.json` documents the adapter shape; its column names and constraints are fictitious. Changing its synthetic flag does not make it official. Real mappings must bind a verified compiled schema and explicit current golden evidence before claiming current Walmart compatibility. Optional support does not require that claim.
 2. Set PAYMENT_MODE=stripe, STRIPE_SECRET_KEY (prefer a restricted sandbox key, `rk_test_…`), STRIPE_WEBHOOK_SECRET, APP_URL and STRIPE_PRICE_AMOUNT (integer USD cents, default 499).
 3. Forward Stripe webhooks for local testing:
    ```bash
@@ -47,7 +47,7 @@ See [the Stripe payment plan and setup guide](docs/stripe-setup.md) for account 
 4. Deploy the Dockerfile to one always-on Railway service with a private volume at `/data`, or one Render service with an equivalent disk. Mount the reviewed schema outside the temporary record directory; set SCHEMA_PATH accordingly. Set HTTPS APP_URL. Configure the public `/api/webhook` endpoint in Stripe, then switch to live keys only after the official-template roundtrip succeeds.
 5. One instance only. No autoscaling, no ephemeral serverless storage, no volume backups containing files. Do not log request Authorization headers or bodies. Set TRUSTED_IP_HEADER only if the edge overwrites it and direct origin access is blocked; otherwise requests share a conservative rate-limit bucket. Configure edge body limits/timeouts and disable access logging of analysis URLs if possible.
 
-To preview a production build with synthetic files, set ALLOW_SYNTHETIC_FIXTURES=true and run `npm run build && npm start`. Real checkout stays blocked for synthetic files, and mock payments stay disabled because NODE_ENV is production.
+To preview a production build with synthetic files, set ALLOW_SYNTHETIC_FIXTURES=true and run `npm run build && npm start`. Optional real support is available after generating a corrected download when Stripe is configured; synthetic limitations remain visible. Mock payments stay disabled because NODE_ENV is production.
 
 ## Retention and payment expiry
 

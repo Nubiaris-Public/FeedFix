@@ -13,7 +13,7 @@ test("free download, optional feedback and optional support", async ({
 }) => {
   await page.goto("/");
   await expect(
-    page.getByRole("heading", { name: /Walmart rejected/ }),
+    page.getByRole("heading", { name: /Walmart item setup file checker/ }),
   ).toBeVisible();
   await page
     .locator("#workbook")
@@ -44,6 +44,11 @@ test("free download, optional feedback and optional support", async ({
   await expect(
     page.getByRole("button", { name: "Haven’t tried yet", exact: true }),
   ).toHaveAttribute("aria-pressed", "true");
+  await expect(
+    page.getByRole("region", { name: "Optional support" }),
+  ).toContainText(
+    "Payment does not guarantee Walmart acceptance or certify template compatibility.",
+  );
   await page
     .getByRole("button", { name: "Support FeedFix — $4.99 (optional)" })
     .click();

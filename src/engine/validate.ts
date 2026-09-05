@@ -9,29 +9,37 @@ import type {
 import { rules } from "./rules";
 const issueId = (parts: unknown[]) =>
   createHash("sha256").update(JSON.stringify(parts)).digest("hex").slice(0, 24);
-export function table(workbook: ParsedWorkbook, schema: MarketplaceSchema) {
+export class UnsupportedTemplateError extends Error {}
+export function matchTemplate(
+  workbook: ParsedWorkbook,
+  schema: MarketplaceSchema,
+) {
   const sheet = workbook.sheets.find((s) => s.name === schema.sheet);
   if (
     !sheet ||
     sheet.cells.get(schema.marker.cell)?.value !== schema.marker.value
   )
-    throw new Error(
+    throw new UnsupportedTemplateError(
       "This file doesn't appear to be a supported Walmart item setup workbook. This template version isn't supported yet.",
     );
   const columns = new Map<string, string>();
   for (const c of sheet.cells.values())
     if (Number(c.address.match(/\d+$/)![0]) === schema.headerRow) {
       if (columns.has(c.value))
-        throw new Error(
+        throw new UnsupportedTemplateError(
           "Duplicate column headers make this template ambiguous.",
         );
       columns.set(c.value, c.address.replace(/\d+$/, ""));
     }
   for (const f of schema.fields)
     if (!columns.has(f.column))
-      throw new Error(
+      throw new UnsupportedTemplateError(
         `This template is missing the declared ${f.column} column. Upload the original supported template.`,
       );
+  return { sheet, columns };
+}
+export function table(workbook: ParsedWorkbook, schema: MarketplaceSchema) {
+  const { sheet, columns } = matchTemplate(workbook, schema);
   const rowSet = new Set<number>();
   for (const c of sheet.cells.values()) {
     const row = Number(c.address.match(/\d+$/)![0]);

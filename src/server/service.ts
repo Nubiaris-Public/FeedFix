@@ -1,7 +1,13 @@
 import { supportEvidence } from "../engine/evidence";
 import { getSchema } from "../engine/schema";
 import { parseWorkbook } from "../engine/workbook";
-import { validateWorkbook } from "../engine/validate";
+import type { UnsupportedUpload } from "../shared/upload-result";
+import { identifyWalmartWorkbook } from "../engine/identify-workbook";
+import {
+  matchTemplate,
+  UnsupportedTemplateError,
+  validateWorkbook,
+} from "../engine/validate";
 import {
   buildFixPlan,
   applyApprovedAutomaticFixes,
@@ -35,14 +41,50 @@ export function publicAnalysis(a: Analysis) {
     feedback: a.feedback,
   };
 }
+export function inspectUpload(original: Buffer) {
+  const workbook = parseWorkbook(original);
+  const schema =
+    !process.env.SCHEMA_PATH &&
+    process.env.NODE_ENV === "production" &&
+    process.env.ALLOW_SYNTHETIC_FIXTURES !== "true"
+      ? undefined
+      : getSchema();
+  if (schema) {
+    try {
+      matchTemplate(workbook, schema);
+      return { workbook, schema, unsupported: null };
+    } catch (error) {
+      if (!(error instanceof UnsupportedTemplateError)) throw error;
+    }
+  }
+  const walmartDetected = Boolean(identifyWalmartWorkbook(workbook));
+  const unsupported: UnsupportedUpload = {
+    status: walmartDetected ? "NEW_WALMART_TEMPLATE" : "UNKNOWN_SPREADSHEET",
+    walmartDetected,
+    supported: false,
+    modified: false,
+    studyShareAvailable: walmartDetected,
+    checkoutAvailable: false,
+  };
+  return { workbook, schema: undefined, unsupported };
+}
 export async function analyze(
   original: Buffer,
   report?: { buffer: Buffer; extension: "csv" | "xlsx" },
 ) {
   const start = Date.now();
   track("analysis_started");
-  const schema = getSchema(),
-    workbook = parseWorkbook(original);
+  const { schema, workbook, unsupported } = inspectUpload(original);
+  if (unsupported) {
+    track(
+      unsupported.walmartDetected
+        ? "new_template_detected"
+        : "unknown_spreadsheet_detected",
+    );
+    if (unsupported.studyShareAvailable) track("template_share_offered");
+    return unsupported;
+  }
+  if (!schema) throw Error("Missing configured schema");
   const result = validateWorkbook(workbook, schema);
   const issues = report
     ? correlate(
@@ -103,7 +145,11 @@ export async function analyze(
   };
   track("analysis_completed", counts);
   track(issues.length ? "issues_found" : "no_issues_found", counts);
-  return { token, analysis: publicAnalysis(record) };
+  return {
+    status: "SUPPORTED" as const,
+    token,
+    analysis: publicAnalysis(record),
+  };
 }
 export async function download(id: string, token: string, report = false) {
   const record = await authorize(id, token);

@@ -109,7 +109,17 @@ function textValue(v: unknown): string {
     return String((v as Record<string, unknown>)["#text"] ?? "");
   return String(v);
 }
+export class InvalidWorkbookError extends Error {}
 export function parseWorkbook(original: Buffer): ParsedWorkbook {
+  try {
+    return parseCheckedWorkbook(original);
+  } catch (error) {
+    throw new InvalidWorkbookError(
+      error instanceof Error ? error.message : "Upload a valid XLSX workbook.",
+    );
+  }
+}
+function parseCheckedWorkbook(original: Buffer): ParsedWorkbook {
   const zip = checkedZip(original);
   const book = xmlParse(zip.readAsText("xl/workbook.xml"));
   const rels = list<Record<string, string>>(
@@ -192,7 +202,13 @@ export function parseWorkbook(original: Buffer): ParsedWorkbook {
             (!c.is || Object.keys(c.is).every((k) => k === "t")),
         });
       }
-      return { name: s["@_name"], path: member, xml, cells };
+      return {
+        name: s["@_name"],
+        visibility: s["@_state"] || "visible",
+        path: member,
+        xml,
+        cells,
+      };
     },
   );
   if (!sheets.length || sheets.length > 30)

@@ -40,7 +40,7 @@ The production definition sets `APP_URL=https://feedfix.app` and `SEO_INDEXABLE=
 - `APP_URL`: your public HTTPS origin. Required for browser requests and Checkout redirects.
 - `SEO_INDEXABLE=true`: enable Google indexing on the final production domain only. Defaults to false when absent. Keep previews false. See [SEO.md](SEO.md).
 - `GOOGLE_SITE_VERIFICATION`: optional Search Console HTML verification content value; managed in Railway Variables.
-- `ALLOW_SYNTHETIC_FIXTURES=true`: for a preview using the fictional fixtures. These cannot accept real payments. Set false for real traffic.
+- `ALLOW_SYNTHETIC_FIXTURES=true`: for a preview using the fictional fixtures. Voluntary Stripe support is available after a corrected download, with synthetic limitations disclosed. Set false for real traffic.
 - `SCHEMA_PATH`: absolute path to a reviewed official schema JSON for real files. There is no official Walmart schema bundled. Include the reviewed schema in the Docker image with an explicit `COPY` and point here; keep it outside `/data/feedfix`.
 - `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`: optional until enabling support payments. Missing keys do not block free analysis/downloads.
 - `TRUSTED_IP_HEADER`: leave unset until the deployed proxy's overwrite behavior is verified. Without a trusted header, the app conservatively shares one rate-limit bucket across requests.

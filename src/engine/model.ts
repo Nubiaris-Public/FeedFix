@@ -122,6 +122,7 @@ export interface ParsedCell {
   raw: string;
 }
 export interface ParsedSheet {
+  visibility?: string;
   name: string;
   path: string;
   xml: string;

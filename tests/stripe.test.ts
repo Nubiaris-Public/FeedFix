@@ -36,27 +36,16 @@ it("creates server-priced idempotent Checkout and refunds a late confirmed payme
   const { analyze, download } = await import("../src/server/service");
   const { store } = await import("../src/server/store");
   const { checkout, fulfillEvent } = await import("../src/server/payment");
-  const { analysis, token } = await analyze(
+  const result = await analyze(
     await readFile("tests/fixtures/walmart/multiple-errors.xlsx"),
   );
-  // Test only: emulate a reviewed template record to reach the real-provider branch.
-  const record = await store.get(analysis.id);
-  // Explicit provider-unit-test double, not a promoted fixture or golden evidence.
-  const evidenceModule = await import("../src/engine/evidence");
-  const evidenceMock = vi
-    .spyOn(evidenceModule, "supportEvidence")
-    .mockReturnValue({
-      origin: "WALMART_CURRENT_SUPPORTED",
-      paidSupportEligible: true,
-      schemaSha256: record!.schemaSha256,
-      mappingSha256: record!.mappingSha256!,
-    });
-  await store.put({
-    ...record!,
-    synthetic: false,
-    origin: "WALMART_CURRENT_SUPPORTED",
-    paidSupportEligible: true,
-  });
+  if (result.status !== "SUPPORTED") throw Error("Expected supported fixture");
+  const { analysis, token } = result;
+  expect(analysis.paidSupportEligible).toBe(false);
+  expect(analysis.synthetic).toBe(true);
+  await expect(checkout(analysis.id, token)).rejects.toThrow(
+    /Download your corrected file/,
+  );
   createSession.mockResolvedValue({
     id: "cs_fixture",
     url: "https://checkout.stripe.com/test-fixture",
@@ -64,16 +53,12 @@ it("creates server-priced idempotent Checkout and refunds a late confirmed payme
   await download(analysis.id, token);
   await checkout(analysis.id, token);
   await checkout(analysis.id, token);
-  evidenceMock.mockReturnValueOnce({
-    origin: "WALMART_CURRENT_SUPPORTED",
-    paidSupportEligible: false,
-    schemaSha256: record!.schemaSha256,
-    mappingSha256: record!.mappingSha256!,
-  });
-  await expect(checkout(analysis.id, token)).rejects.toThrow(/evidence/);
   expect(createSession).toHaveBeenCalledTimes(1);
   const [params, options] = createSession.mock.calls[0];
   expect(params.mode).toBe("payment");
+  expect(params.custom_text.submit.message).toContain(
+    "does not guarantee Walmart acceptance",
+  );
   expect(params.line_items[0].price_data.product_data.name).toContain(
     "optional support",
   );
@@ -98,7 +83,6 @@ it("creates server-priced idempotent Checkout and refunds a late confirmed payme
     },
   } as unknown as import("stripe").default.Event;
   await fulfillEvent(event);
-  evidenceMock.mockRestore();
   expect(refund).toHaveBeenCalledWith(
     { payment_intent: "pi_fixture" },
     { idempotencyKey: "expired-cs_fixture" },

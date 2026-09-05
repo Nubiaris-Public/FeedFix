@@ -1,5 +1,7 @@
 "use client";
 import Link from "next/link";
+import NewTemplateResult from "./new-template-result";
+import type { UnsupportedUpload } from "../shared/upload-result";
 import {
   CONTRIBUTION_CONSENT_TEXT,
   CONTRIBUTION_CONSENT_VERSION,
@@ -14,7 +16,6 @@ type Analysis = {
   itemCount: number;
   sheetCount: number;
   synthetic: boolean;
-  paidSupportEligible?: boolean;
   amount: number;
   autoFixCount: number;
   issues: FeedIssue[];
@@ -87,6 +88,11 @@ export default function FeedFix({
     [filter, setFilter] = useState("ALL"),
     [page, setPage] = useState(1),
     [notice, setNotice] = useState("");
+  const [unmapped, setUnmapped] = useState<UnsupportedUpload | null>(null);
+  const [currentShare, setCurrentShare] = useState<Extract<
+    ContributionReceipt,
+    { status: "saved" }
+  > | null>(null);
   const [studyConsent, setStudyConsent] = useState(false);
   const [studyCopies, setStudyCopies] = useState<
     Extract<ContributionReceipt, { status: "saved" }>[]
@@ -182,6 +188,8 @@ export default function FeedFix({
       return;
     }
     setFile(f);
+    setUnmapped(null);
+    setCurrentShare(null);
     setStudyConsent(false);
     event("file_selected", {
       file_size_bucket:
@@ -216,6 +224,17 @@ export default function FeedFix({
         );
       }
       if (!res.ok) throw new Error(data.error);
+      if (
+        ["NEW_WALMART_TEMPLATE", "UNKNOWN_SPREADSHEET"].includes(data.status)
+      ) {
+        setUnmapped(data);
+        setCurrentShare(
+          data.contribution?.status === "saved" ? data.contribution : null,
+        );
+        setAnalysis(null);
+        history.replaceState({}, "", "/");
+        return;
+      }
       sessionStorage.setItem("feedfix:" + data.analysis.id, data.token);
       setAnalysis(data.analysis);
       history.replaceState({}, "", "/?analysis=" + data.analysis.id);
@@ -287,6 +306,8 @@ export default function FeedFix({
         <Link
           onClick={() => {
             setAnalysis(null);
+            setUnmapped(null);
+            setCurrentShare(null);
             setFile(null);
             setReport(null);
             setNotice("");
@@ -299,19 +320,46 @@ export default function FeedFix({
           <Icon />
           FeedFix
         </Link>
-        <span>No account needed</span>
+        <nav aria-label="Main navigation">
+          <Link href="/guides">Guides</Link>
+          <Link href="/supported-templates">Compatibility</Link>
+        </nav>
       </header>
       <main>
-        {!analysis ? (
+        {unmapped ? (
+          <NewTemplateResult
+            result={unmapped}
+            file={file}
+            receipt={currentShare}
+            copyDeleted={Boolean(
+              currentShare &&
+              !studyCopies.some((copy) => copy.id === currentShare.id),
+            )}
+            onShared={(receipt) => {
+              setCurrentShare(receipt);
+              setStudyCopies((copies) => [...copies, receipt]);
+            }}
+            onExit={() => {
+              setUnmapped(null);
+              setCurrentShare(null);
+              setFile(null);
+              setReport(null);
+              setStudyConsent(false);
+              setNotice("");
+              setError("");
+            }}
+          />
+        ) : !analysis ? (
           <>
             <section className="intro">
               <h1>
-                Walmart rejected your
-                <br className="desktop-break" /> item setup file?
+                Walmart item setup
+                <br className="desktop-break" /> file checker
               </h1>
               <p>
-                Upload it. We’ll find the errors and fix
-                <br className="desktop-break" /> what can be safely corrected.
+                {demo
+                  ? "Find spreadsheet errors and safe corrections on supported templates. New layout? Share it privately to help us add support."
+                  : "Check supported spreadsheets for errors and download safe corrections. No account needed."}
               </p>
             </section>
             <section className="upload-section" aria-label="Upload workbook">
@@ -410,7 +458,42 @@ export default function FeedFix({
               <br />
               Files are automatically deleted within one hour.
             </p>
+            <section
+              className="home-resources"
+              aria-labelledby="template-support"
+            >
+              <h2 id="template-support">
+                Check template support before uploading
+              </h2>
+              <p>
+                File rules depend on the workbook version and product type.{" "}
+                <Link href="/supported-templates">
+                  See compatibility, limits and file handling
+                </Link>{" "}
+                before you start.
+              </p>
+              <h2>Investigate common Walmart spreadsheet errors</h2>
+              <ul>
+                <li>
+                  <Link href="/guides/walmart-gtin-upc-errors">
+                    GTIN and UPC errors: what to check before changing an
+                    identifier
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/guides/walmart-required-fields-allowed-values">
+                    Missing required fields and invalid allowed values
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/guides/walmart-processing-report">
+                    Read a processing report and preserve your workbook
+                  </Link>
+                </li>
+              </ul>
+            </section>
             <section className="faq" aria-label="Frequently asked questions">
+              <h2>Frequently asked questions</h2>
               <details>
                 <summary>
                   Which Walmart item setup errors can FeedFix check?
@@ -584,111 +667,105 @@ export default function FeedFix({
                   >
                     Download change report — free
                   </button>
-                  {analysis.generated &&
-                    (mock || analysis.paidSupportEligible) && (
-                      <section
-                        className="support"
-                        aria-label="Optional support"
-                      >
-                        <h2>Did FeedFix help?</h2>
-                        <p>
-                          Your download is free. If it saved you time, you can
-                          support FeedFix.
-                        </p>
-                        {analysis.status === "PAID" ? (
-                          <p role="status">Thank you for your support!</p>
-                        ) : mockCheckout && mock ? (
-                          <>
-                            <p className="demo-note">
-                              Local test support payment · No real charge
-                            </p>
-                            <button
-                              className="secondary"
-                              disabled={Boolean(busy)}
-                              onClick={finishMock}
-                            >
-                              Simulate optional payment
-                            </button>
-                          </>
-                        ) : (
+                  {analysis.generated && (
+                    <section className="support" aria-label="Optional support">
+                      <h2>Did FeedFix help?</h2>
+                      <p>
+                        Your download is free. If it saved you time, you can
+                        support FeedFix. Payment does not guarantee Walmart
+                        acceptance or certify template compatibility.
+                      </p>
+                      {analysis.status === "PAID" ? (
+                        <p role="status">Thank you for your support!</p>
+                      ) : mockCheckout && mock ? (
+                        <>
+                          <p className="demo-note">
+                            Local test support payment · No real charge
+                          </p>
                           <button
                             className="secondary"
                             disabled={Boolean(busy)}
-                            onClick={pay}
+                            onClick={finishMock}
                           >
-                            Support FeedFix — {money(analysis.amount)}{" "}
-                            (optional)
+                            Simulate optional payment
+                          </button>
+                        </>
+                      ) : (
+                        <button
+                          className="secondary"
+                          disabled={Boolean(busy)}
+                          onClick={pay}
+                        >
+                          Support FeedFix — {money(analysis.amount)} (optional)
+                        </button>
+                      )}
+                      {notice.includes("confirmed") &&
+                        analysis.status !== "PAID" && (
+                          <button
+                            className="text-button"
+                            onClick={async () => {
+                              try {
+                                setAnalysis(
+                                  await (
+                                    await api("analysis/" + analysis.id)
+                                  ).json(),
+                                );
+                              } catch (e) {
+                                setError((e as Error).message);
+                              }
+                            }}
+                          >
+                            Refresh payment status
                           </button>
                         )}
-                        {notice.includes("confirmed") &&
-                          analysis.status !== "PAID" && (
-                            <button
-                              className="text-button"
-                              onClick={async () => {
-                                try {
-                                  setAnalysis(
-                                    await (
-                                      await api("analysis/" + analysis.id)
-                                    ).json(),
-                                  );
-                                } catch (e) {
-                                  setError((e as Error).message);
-                                }
-                              }}
-                            >
-                              Refresh payment status
-                            </button>
-                          )}
-                        <fieldset className="feedback">
-                          <legend>
-                            Did Walmart accept your corrected file?
-                          </legend>
-                          <p>
-                            Optional feedback, reported by you. This is not
-                            verified by Walmart.
-                          </p>
-                          {(
-                            [
-                              ["YES", "Yes"],
-                              ["NO", "No"],
-                              ["NOT_YET", "Haven’t tried yet"],
-                            ] as const
-                          ).map(([outcome, label]) => (
-                            <button
-                              key={outcome}
-                              type="button"
-                              className="secondary"
-                              aria-pressed={analysis.feedback === outcome}
-                              disabled={Boolean(busy)}
-                              onClick={async () => {
-                                setBusy("Saving your feedback…");
-                                setError("");
-                                try {
-                                  setAnalysis(
-                                    await (
-                                      await api("feedback/" + analysis.id, {
-                                        method: "POST",
-                                        headers: {
-                                          "Content-Type": "application/json",
-                                        },
-                                        body: JSON.stringify({ outcome }),
-                                      })
-                                    ).json(),
-                                  );
-                                  setNotice("Thank you for your feedback.");
-                                } catch (e) {
-                                  setError((e as Error).message);
-                                } finally {
-                                  setBusy("");
-                                }
-                              }}
-                            >
-                              {label}
-                            </button>
-                          ))}
-                        </fieldset>
-                      </section>
-                    )}
+                      <fieldset className="feedback">
+                        <legend>Did Walmart accept your corrected file?</legend>
+                        <p>
+                          Optional feedback, reported by you. This is not
+                          verified by Walmart.
+                        </p>
+                        {(
+                          [
+                            ["YES", "Yes"],
+                            ["NO", "No"],
+                            ["NOT_YET", "Haven’t tried yet"],
+                          ] as const
+                        ).map(([outcome, label]) => (
+                          <button
+                            key={outcome}
+                            type="button"
+                            className="secondary"
+                            aria-pressed={analysis.feedback === outcome}
+                            disabled={Boolean(busy)}
+                            onClick={async () => {
+                              setBusy("Saving your feedback…");
+                              setError("");
+                              try {
+                                setAnalysis(
+                                  await (
+                                    await api("feedback/" + analysis.id, {
+                                      method: "POST",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({ outcome }),
+                                    })
+                                  ).json(),
+                                );
+                                setNotice("Thank you for your feedback.");
+                              } catch (e) {
+                                setError((e as Error).message);
+                              } finally {
+                                setBusy("");
+                              }
+                            }}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </fieldset>
+                    </section>
+                  )}
                 </>
               ) : (
                 <p>

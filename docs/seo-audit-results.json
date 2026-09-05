@@ -1,0 +1,42 @@
+{
+  "scope": "Lab audits, not live field metrics or ranking guarantees",
+  "audits": [
+    {
+      "url": "http://127.0.0.1:3200/",
+      "lighthouseVersion": "13.4.1",
+      "fetchTime": "2026-09-05T20:16:03.252Z",
+      "scores": {
+        "performance": 100,
+        "accessibility": 100,
+        "best-practices": 96,
+        "seo": 100
+      },
+      "environment": "Local production build, analytics disabled; indexable home run has production canonical origin and expected /api/events origin mismatch",
+      "remainingSelectedFailures": [
+        "errors-in-console"
+      ]
+    },
+    {
+      "url": "http://127.0.0.1:3200/guides/walmart-processing-report",
+      "lighthouseVersion": "13.4.1",
+      "fetchTime": "2026-09-05T20:16:20.007Z",
+      "scores": {
+        "accessibility": 100,
+        "best-practices": 100,
+        "seo": 100
+      },
+      "environment": "Local production build; analytics disabled",
+      "remainingSelectedFailures": []
+    },
+    {
+      "url": "http://127.0.0.1:3200/",
+      "lighthouseVersion": "13.4.1",
+      "fetchTime": "2026-09-05T20:17:49.134Z",
+      "scores": {
+        "best-practices": 100
+      },
+      "environment": "Local production build with matching APP_URL=http://127.0.0.1:3200 and SEO_INDEXABLE=false; best-practices only",
+      "consoleErrorAudit": 1
+    }
+  ]
+}

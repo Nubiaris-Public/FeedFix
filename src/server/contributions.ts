@@ -12,6 +12,7 @@ import {
 import { resolve, join, relative, isAbsolute } from "node:path";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
+import { identifyWalmartWorkbook } from "../engine/identify-workbook";
 import { recordStudyFeedback, studyFeedback } from "./study-feedback";
 import { studyWorkbook } from "./workbook-study";
 import { parseWorkbook } from "../engine/workbook";
@@ -234,6 +235,35 @@ export class ContributionStore {
     )
       throw new Error("This study deletion link is invalid.");
     await this.remove(root, id);
+  }
+  async notificationTemplate(id: string, token: string) {
+    if (!identifier.test(id) || !/^[a-f0-9]{64}$/.test(token))
+      throw Error("This study link is invalid.");
+    const root = await this.root();
+    await this.cleanup();
+    const dir = join(root, id);
+    const info = await lstat(dir);
+    if (!info.isDirectory() || info.isSymbolicLink())
+      throw Error("This study link is invalid.");
+    const metadata = metadataSchema.parse(
+      JSON.parse(await readFile(join(dir, "metadata.json"), "utf8")),
+    );
+    if (
+      !timingSafeEqual(
+        Buffer.from(metadata.deleteTokenHash, "hex"),
+        Buffer.from(hash(token), "hex"),
+      )
+    )
+      throw Error("This study link is invalid.");
+    const bytes = await readFile(join(dir, "original.xlsx"));
+    if (hash(bytes) !== metadata.sourceSha256)
+      throw Error("This study copy failed its integrity check.");
+    const template = identifyWalmartWorkbook(parseWorkbook(bytes));
+    if (!template)
+      throw Error(
+        "This workbook does not qualify for a template notification.",
+      );
+    return template;
   }
   async feedback() {
     return studyFeedback(await this.root());

@@ -130,7 +130,7 @@ it("does not offer payment for valid files", async () => {
     (await handle(request("checkout/" + analysis.id, "POST", token))).status,
   ).toBe(400);
 });
-it("production cannot use mock payment or sell synthetic fixtures", async () => {
+it("production cannot use mock payments and requires configured Stripe", async () => {
   const { analysis, token } = await upload();
   await handle(request("download/" + analysis.id, "GET", token));
   vi.stubEnv("NODE_ENV", "production");
@@ -145,7 +145,7 @@ it("production cannot use mock payment or sell synthetic fixtures", async () => 
           await handle(request("checkout/" + analysis.id, "POST", token))
         ).json()
       ).error,
-    ).toMatch(/Synthetic/);
+    ).toMatch(/Checkout is not configured/);
   } finally {
     vi.stubEnv("NODE_ENV", "test");
   }

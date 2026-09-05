@@ -121,11 +121,13 @@ it("captures unsupported original layouts with consent and exposes only a deleti
     );
   };
   const without = await upload();
-  expect(without.status).toBe(400);
+  expect(without.status).toBe(200);
   expect(await readdir(dir)).toEqual([]);
   const response = await upload(CONTRIBUTION_CONSENT_VERSION);
-  expect(response.status).toBe(400);
+  expect(response.status).toBe(200);
   const data = await response.json();
+  expect(data.status).toBe("UNKNOWN_SPREADSHEET");
+  expect(data.walmartDetected).toBe(false);
   expect(data.contribution.status).toBe("saved");
   expect(data.contribution.sourceSha256).toBeUndefined();
   expect(

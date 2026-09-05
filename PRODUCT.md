@@ -5,7 +5,7 @@ Landing → XLSX + optional report → free diagnosis, full correction details �
 No account. One upload surface. Payment never unlocks data or downloads. Offer support only after generating a corrected file. Ask optionally whether Walmart accepted it: Yes / No / Haven’t tried yet. Responses are user-reported, not verified acceptance.
 
 ## Price and experiment
-Corrections and downloads are free. STRIPE_PRICE_AMOUNT is the suggested voluntary support amount in integer USD cents, default 499. No subscription. Retain the short checkout window (first 15 minutes, expiry at analysis creation +45 minutes) and automatically refund payments confirmed after the temporary record expires. Downloads remain independent of payment and expire with the analysis.
+Corrections and downloads are free. STRIPE_PRICE_AMOUNT is the suggested voluntary support amount in integer USD cents, default 499. No subscription. Voluntary support does not require current Walmart compatibility evidence; it is available after a corrected file has been generated, including clearly labeled synthetic previews. Show that payment neither guarantees Walmart acceptance nor certifies template compatibility, both before Checkout and on Stripe. Template detection and compatibility claims remain evidence-based. Retain the short checkout window (first 15 minutes, expiry at analysis creation +45 minutes) and automatically refund payments confirmed after the temporary record expires. Downloads remain independent of payment and expire with the analysis.
 Initial experiment: seek 10 real cases with a reported outcome and observe optional support. A voluntary payment validates support after receiving value, not willingness to buy a mandatory download.
 
 ## Correction log

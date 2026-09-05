@@ -1,4 +1,3 @@
-import { supportEvidence } from "../engine/evidence";
 import Stripe from "stripe";
 import { config } from "./config";
 import { authorize, store } from "./store";
@@ -23,25 +22,6 @@ export async function checkout(id: string, token: string) {
     throw new Error(
       "There are no automatic corrections to support for this analysis.",
     );
-  if (record.synthetic && !c.mock)
-    throw new Error(
-      "Synthetic fixtures cannot receive real support payments. Configure a reviewed official template first.",
-    );
-  const currentEvidence =
-    !c.mock && record.schemaSnapshot
-      ? supportEvidence(record.schemaSnapshot)
-      : undefined;
-  if (
-    !c.mock &&
-    (record.origin !== "WALMART_CURRENT_SUPPORTED" ||
-      record.paidSupportEligible !== true ||
-      !currentEvidence?.paidSupportEligible ||
-      currentEvidence.schemaSha256 !== record.schemaSha256 ||
-      currentEvidence.mappingSha256 !== record.mappingSha256)
-  )
-    throw new Error(
-      "This analysis has no current supported Walmart workbook evidence. Real support payments are disabled.",
-    );
   if (
     Date.now() - record.createdAt > 15 * 60000 ||
     record.expiresAt - Date.now() < 31 * 60000
@@ -61,6 +41,12 @@ export async function checkout(id: string, token: string) {
     const session = await stripe().checkout.sessions.create(
       {
         mode: "payment",
+        custom_text: {
+          submit: {
+            message:
+              "Voluntary support for FeedFix. Downloads are free. Payment does not guarantee Walmart acceptance or certify template compatibility.",
+          },
+        },
         client_reference_id: id,
         metadata: { analysisId: id },
         line_items: [

@@ -1,3 +1,4 @@
+import { LocalTemplateNotifications } from "./template-notifications";
 import { ContributionStore } from "./contributions";
 import {
   mkdir,
@@ -146,7 +147,10 @@ export function startCleanup() {
       store.cleanup(),
       new UsageLog().cleanup(),
       new ContributionStore().cleanup(),
+      new LocalTemplateNotifications().cleanup(),
     ]);
+    if (results[3].status === "rejected")
+      console.warn(JSON.stringify({ event: "notification_cleanup_failed" }));
     if (results[2].status === "rejected")
       console.warn(JSON.stringify({ event: "study_cleanup_failed" }));
   };

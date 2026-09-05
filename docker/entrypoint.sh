@@ -6,9 +6,9 @@ if [ -n "${RAILWAY_ENVIRONMENT_ID:-}" ] && [ "${RAILWAY_VOLUME_MOUNT_PATH:-}" !=
   exit 1
 fi
 if [ "$(id -u)" = 0 ]; then
-  mkdir -p /data/feedfix /data/metrics /data/study
-  chown node:node /data/feedfix /data/metrics /data/study
-  chmod 700 /data/feedfix /data/metrics /data/study
+  mkdir -p /data/feedfix /data/metrics /data/study /data/template-notifications
+  chown node:node /data/feedfix /data/metrics /data/study /data/template-notifications
+  chmod 700 /data/feedfix /data/metrics /data/study /data/template-notifications
   exec gosu node "$@"
 fi
 exec "$@"
