@@ -59,7 +59,7 @@ See [.env.example](.env.example). STRIPE_PRICE_AMOUNT is cents, not a Stripe Pri
 
 ## Limits and launch evidence
 
-No live Stripe charge, official Walmart import, provider deployment or field performance measurement has been performed. Configure actual credentials locally; never put them in Git. The `.git` directory supplied by the environment is read-only and was not a valid repository, so no commits or remote were created.
+No live Stripe charge, official Walmart import, provider deployment or field performance measurement has been performed. Configure actual credentials locally; never put them in Git.
 
 `npm audit` identified a moderate advisory in ExcelJS's dev-only uuid dependency. ExcelJS only calls uuid v4 without a buffer; the reported v3/v5/v6 buffer API is not reached. ExcelJS is absent from the production writer. Do not downgrade workbook tooling blindly to silence an advisory. See architecture for the preservation tradeoff.
 
@@ -77,3 +77,5 @@ The command loads `.env` using Next’s environment loader. USAGE_LOG_PATH defau
 We count the first successful corrected XLSX generation requested for each analysis, with at least one fix. Analysis/preflight alone, JSON-report downloads and repeated XLSX downloads do not increase the count. Uploading the same input again is a new analysis and can count again. This does not measure unique users, successful network delivery or verified Walmart acceptance. Synthetic traffic never increases the real count.
 
 Only daily aggregates survive permanently. Temporary hashed deduplication receipts expire with the analysis and are swept every 30 seconds while running; no content, filenames, product identifiers, IPs or bearer tokens are retained in metrics. Stopped hosts still require the lifecycle precautions described above. If metrics storage fails, downloads continue and a structured `correction_log_write_failed` warning is emitted. A later request retries the count; without a retry an undercount is possible. Do not treat absent log data as confirmed zero usage after a storage error.
+
+Railway deployment: follow [RAILWAY.md](RAILWAY.md) for the service, volume, domain, optional Stripe and deployed statistics.
