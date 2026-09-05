@@ -3,6 +3,7 @@ WORKDIR /app
 COPY package*.json ./
 RUN npm ci
 COPY . .
+ARG GA_MEASUREMENT_ID
 RUN npm run build
 RUN npx esbuild scripts/stats.ts --bundle --platform=node --format=cjs --outfile=/app/stats.cjs
 

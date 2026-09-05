@@ -59,6 +59,12 @@ See [.env.example](.env.example). STRIPE_PRICE_AMOUNT is cents, not a Stripe Pri
 
 Microsoft Clarity is integrated in the root layout and loads once across page navigation, after hydration. To enable it, set `CLARITY_PROJECT_ID` to the project ID from Clarity → Settings → Setup **before building**, then rebuild/redeploy. Leave it empty to disable browser tracking. This is independent of `ANALYTICS_ENABLED`, which controls server events. No additional npm package is required. The security policy allows Clarity's scripts, collection requests and tracking images, following [Microsoft's CSP documentation](https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-csp).
 
+## Google Analytics 4
+
+Set `GA_MEASUREMENT_ID=G-XXXXXXXXXX` from your GA4 web data stream before building, then rebuild/redeploy. Leave it empty to disable GA4. For Docker, pass `--build-arg GA_MEASUREMENT_ID=G-XXXXXXXXXX`; on Railway, set the service variable with that name so it is supplied to the Docker build. This is a public identifier, not a secret.
+
+The root layout loads Google's tag once after hydration. Keep enhanced measurement for page views and browser history changes enabled in the GA4 stream to measure client-side navigation without duplicate manual events. This integration is independent of `ANALYTICS_ENABLED` and does not forward server funnel events. After deployment, visit the site and check GA4's Realtime report. Implementation references: [Google tag](https://developers.google.com/analytics/devguides/collection/ga4/tag-options), [page views](https://developers.google.com/analytics/devguides/collection/ga4/views), and [CSP requirements](https://developers.google.com/tag-platform/security/guides/csp).
+
 ## Limits and launch evidence
 
 No live Stripe charge, official Walmart import, provider deployment or field performance measurement has been performed. Configure actual credentials locally; never put them in Git.
