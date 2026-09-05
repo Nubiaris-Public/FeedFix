@@ -49,7 +49,10 @@ it("keeps exact original bytes privately with UNKNOWN provenance, receipt and de
   ).toBe(0o600);
   await expect(store.delete(receipt.id, "wrong")).rejects.toThrow(/invalid/);
   await store.delete(receipt.id, receipt.deleteToken);
-  expect(await readdir(dir)).toEqual([]);
+  expect(await readdir(dir)).toEqual([
+    "feedback.json",
+    "synthetic-checks.json",
+  ]);
 });
 it("rejects unsafe content and enforces quota without keeping partial copies", async () => {
   const { dir, store } = await setup();
@@ -62,7 +65,11 @@ it("rejects unsafe content and enforces quota without keeping partial copies", a
   await expect(
     store.save(await workbook(), CONTRIBUTION_CONSENT_VERSION),
   ).rejects.toThrow(/capacity/);
-  expect(await readdir(dir)).toHaveLength(1);
+  expect(
+    (await readdir(dir)).filter(
+      (n) => !["feedback.json", "synthetic-checks.json"].includes(n),
+    ),
+  ).toHaveLength(1);
 });
 it("expires copies independently of temporary analysis records", async () => {
   const { dir, store } = await setup();
@@ -72,7 +79,10 @@ it("expires copies independently of temporary analysis records", async () => {
   );
   if (receipt.status !== "saved") throw Error("missing receipt");
   await store.cleanup(Date.parse(receipt.expiresAt) + 1);
-  expect(await readdir(dir)).toEqual([]);
+  expect(await readdir(dir)).toEqual([
+    "feedback.json",
+    "synthetic-checks.json",
+  ]);
 });
 it("captures unsupported original layouts with consent and exposes only a deletion receipt", async () => {
   const { dir } = await setup();
@@ -144,7 +154,10 @@ it("captures unsupported original layouts with consent and exposes only a deleti
     ),
   );
   expect(deletion.status).toBe(200);
-  expect(await readdir(dir)).toEqual([]);
+  expect(await readdir(dir)).toEqual([
+    "feedback.json",
+    "synthetic-checks.json",
+  ]);
 });
 it("a damaged receipt cannot keep expired files indefinitely", async () => {
   const { dir, store } = await setup();
@@ -156,7 +169,10 @@ it("a damaged receipt cannot keep expired files indefinitely", async () => {
   const { writeFile } = await import("node:fs/promises");
   await writeFile(join(dir, receipt.id, "metadata.json"), "damaged");
   await store.cleanup(Date.now() + 60 * 60 * 1000);
-  expect(await readdir(dir)).toEqual([]);
+  expect(await readdir(dir)).toEqual([
+    "feedback.json",
+    "synthetic-checks.json",
+  ]);
 });
 it("rejects public and temporary storage overlap", async () => {
   const { dir } = await setup();
@@ -173,4 +189,114 @@ it("rejects public and temporary storage overlap", async () => {
       CONTRIBUTION_CONSENT_VERSION,
     ),
   ).rejects.toThrow(/private/);
+});
+it("automatically studies candidate layouts without certifying them or retaining item values in the report", async () => {
+  const { dir, store } = await setup();
+  const ExcelJS = (await import("exceljs")).default;
+  const book = new ExcelJS.Workbook();
+  const items = book.addWorksheet("Items");
+  items.getCell("A1").value = "Version=5.0.20240827-15_55_15,MP_ITEM,example";
+  items.getCell("D4").value = "SKU";
+  items.getCell("D5").value = "sku";
+  items.getCell("D7").value = "PRIVATE-MERCHANT-SKU";
+  items.getCell("E7").value = { formula: "1+1", result: 2 };
+  items.mergeCells("A2:C2");
+  items.getCell("F7").dataValidation = { type: "list", formulae: ['"Yes,No"'] };
+  book.addWorksheet("Hidden lists", { state: "hidden" });
+  const input = Buffer.from(await book.xlsx.writeBuffer());
+  const receipt = await store.save(input, CONTRIBUTION_CONSENT_VERSION);
+  if (receipt.status !== "saved") throw Error("missing receipt");
+  const reportPath = join(dir, receipt.id, "study.json");
+  const reportText = await readFile(reportPath, "utf8");
+  const report = JSON.parse(reportText);
+  expect(report.origin).toBe("UNKNOWN");
+  expect(report.authenticity).toBe("NOT_VERIFIED");
+  expect(report.schemaCompatibility).toBe("NOT_EVALUATED");
+  expect(report.repairStatus).toBe("NOT_ATTEMPTED");
+  expect(report.sheets[0]).toMatchObject({
+    declaredSchemaVersion: "5.0.20240827-15_55_15",
+    candidateDataRows: 1,
+    formulas: 1,
+    mergedRanges: 1,
+    dataValidations: 1,
+    candidateColumns: [
+      {
+        column: "D",
+        declaredField: "sku",
+        displayName: "SKU",
+        truncated: false,
+      },
+    ],
+  });
+  expect(report.sheets[1]).toMatchObject({
+    name: "Hidden lists",
+    order: 1,
+    visibility: "hidden",
+  });
+  expect(report.packageMembers.length).toBeGreaterThan(5);
+  expect(reportText).not.toContain("PRIVATE-MERCHANT-SKU");
+  expect((await stat(reportPath)).mode & 0o777).toBe(0o600);
+  expect(await store.inspect(receipt.id)).toMatchObject(report);
+  expect(await readFile(join(dir, receipt.id, "original.xlsx"))).toEqual(input);
+  await store.cleanup(Date.parse(receipt.expiresAt) + 1);
+  expect(await readdir(dir)).toEqual([
+    "feedback.json",
+    "synthetic-checks.json",
+  ]);
+});
+
+it("retains only fixed aggregate signals after expiry and never feeds prior consent", async () => {
+  const { dir, store } = await setup();
+  expect(await store.save(await workbook(), "workbook-study-1h-v1")).toEqual({
+    status: "not_requested",
+  });
+  expect(await readdir(dir)).toEqual([]);
+  const receipt = await store.save(
+    await workbook(),
+    CONTRIBUTION_CONSENT_VERSION,
+  );
+  if (receipt.status !== "saved") throw Error("missing receipt");
+  const before = await store.feedback();
+  expect(before.uploads).toBe(1);
+  expect(before.enablesSupportOrPayments).toBe(false);
+  expect(before.proposals.length).toBeGreaterThan(0);
+  await store.inspect(receipt.id);
+  await store.list();
+  expect(await store.feedback()).toEqual(before);
+  const raw = await readFile(join(dir, "feedback.json"), "utf8");
+  const data = JSON.parse(raw);
+  expect(Object.keys(data).sort()).toEqual(["signals", "uploads", "version"]);
+  expect(Object.values(data.signals).every((v) => Number.isInteger(v))).toBe(
+    true,
+  );
+  expect(raw).not.toContain(receipt.id);
+  expect(raw).not.toContain(receipt.deleteToken);
+  expect((await stat(join(dir, "feedback.json"))).mode & 0o777).toBe(0o600);
+  await store.cleanup(Date.parse(receipt.expiresAt) + 1);
+  expect(await readdir(dir)).toEqual([
+    "feedback.json",
+    "synthetic-checks.json",
+  ]);
+  expect(await store.feedback()).toEqual(before);
+});
+it("old consent copies remain deletable after upgrading consent", async () => {
+  const { dir, store } = await setup();
+  const receipt = await store.save(
+    await workbook(),
+    CONTRIBUTION_CONSENT_VERSION,
+  );
+  if (receipt.status !== "saved") throw Error("missing receipt");
+  const { writeFile } = await import("node:fs/promises");
+  const { LEGACY_CONTRIBUTION_CONSENT_TEXT } =
+    await import("../src/shared/contribution-consent");
+  const path = join(dir, receipt.id, "metadata.json");
+  const m = JSON.parse(await readFile(path, "utf8"));
+  m.consent.version = "workbook-study-1h-v1";
+  m.consent.text = LEGACY_CONTRIBUTION_CONSENT_TEXT;
+  await writeFile(path, JSON.stringify(m));
+  await store.delete(receipt.id, receipt.deleteToken);
+  expect(await readdir(dir)).toEqual([
+    "feedback.json",
+    "synthetic-checks.json",
+  ]);
 });

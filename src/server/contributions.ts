@@ -12,10 +12,13 @@ import {
 import { resolve, join, relative, isAbsolute } from "node:path";
 import { createHash, randomBytes, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
+import { recordStudyFeedback, studyFeedback } from "./study-feedback";
+import { studyWorkbook } from "./workbook-study";
 import { parseWorkbook } from "../engine/workbook";
 import {
   CONTRIBUTION_CONSENT_VERSION,
   CONTRIBUTION_CONSENT_TEXT,
+  LEGACY_CONTRIBUTION_CONSENT_TEXT,
   CONTRIBUTION_TTL_MS,
   type ContributionReceipt,
 } from "../shared/contribution-consent";
@@ -34,8 +37,8 @@ const metadataSchema = z.object({
   expiresAt: z.number(),
   deleteTokenHash: z.string().regex(/^[a-f0-9]{64}$/),
   consent: z.object({
-    version: z.literal(CONTRIBUTION_CONSENT_VERSION),
-    text: z.literal(CONTRIBUTION_CONSENT_TEXT),
+    version: z.enum([CONTRIBUTION_CONSENT_VERSION, "workbook-study-1h-v1"]),
+    text: z.enum([CONTRIBUTION_CONSENT_TEXT, LEGACY_CONTRIBUTION_CONSENT_TEXT]),
     acceptedAt: z.number(),
   }),
 });
@@ -79,7 +82,7 @@ export class ContributionStore {
     if (!info) return;
     if (!info.isDirectory() || info.isSymbolicLink())
       throw new Error("Invalid study storage entry");
-    for (const name of ["original.xlsx", "metadata.json"])
+    for (const name of ["original.xlsx", "metadata.json", "study.json"])
       await unlink(join(dir, name)).catch((e) => {
         if (e.code !== "ENOENT") throw e;
       });
@@ -124,7 +127,7 @@ export class ContributionStore {
       return { status: "not_requested" };
     // Safe package parsing deliberately precedes template matching: unknown layouts
     // can be studied, while macros, unsafe ZIP/XML and external links are refused.
-    parseWorkbook(original);
+    const workbook = parseWorkbook(original);
     const root = await this.root();
     await this.cleanup();
     const maxFiles = z.coerce
@@ -172,6 +175,7 @@ export class ContributionStore {
         acceptedAt: createdAt,
       },
     });
+    const report = studyWorkbook(original, workbook);
     const pending = ".pending-" + id;
     await mkdir(join(root, pending), { mode: 0o700 });
     try {
@@ -184,10 +188,20 @@ export class ContributionStore {
         JSON.stringify(metadata, null, 2) + "\n",
         { mode: 0o600, flag: "wx" },
       );
+      await writeFile(
+        join(root, pending, "study.json"),
+        JSON.stringify(report, null, 2) + "\n",
+        { mode: 0o600, flag: "wx" },
+      );
       await rename(join(root, pending), join(root, id));
     } catch (error) {
       await this.remove(root, pending);
       throw error;
+    }
+    try {
+      await recordStudyFeedback(root, report);
+    } catch {
+      console.error("study_feedback_failed");
     }
     return {
       status: "saved",
@@ -220,6 +234,9 @@ export class ContributionStore {
     )
       throw new Error("This study deletion link is invalid.");
     await this.remove(root, id);
+  }
+  async feedback() {
+    return studyFeedback(await this.root());
   }
   async list() {
     const root = await this.root();
@@ -256,16 +273,11 @@ export class ContributionStore {
     );
     if (hash(bytes) !== metadata.sourceSha256)
       throw new Error("Study copy checksum mismatch");
-    const workbook = parseWorkbook(bytes);
+    // Recompute for older copies too; do not extend retention or create new files.
     return {
       id,
-      origin: metadata.origin,
       expiresAt: new Date(metadata.expiresAt).toISOString(),
-      sheets: workbook.sheets.map((s) => ({
-        name: s.name,
-        cells: s.cells.size,
-        formulas: [...s.cells.values()].filter((c) => c.formula).length,
-      })),
+      ...studyWorkbook(bytes, parseWorkbook(bytes)),
     };
   }
 }

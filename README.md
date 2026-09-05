@@ -35,8 +35,10 @@ Webpack is explicitly selected because Turbopack's CSS worker required a socket 
 
 ## Production and real Stripe test mode
 
+See [the Stripe payment plan and setup guide](docs/stripe-setup.md) for account selection, exact variables, webhook events and activation checks.
+
 1. Obtain and validate an official template/schema pair as described in [ARCHITECTURE.md](ARCHITECTURE.md). Create a reviewed schema JSON and set SCHEMA_PATH to its absolute path. `schema.synthetic.json` documents the adapter shape; its column names and constraints are fictitious. Changing its synthetic flag does not make it official. Real mappings must bind a verified compiled schema and explicit current golden evidence before support payments are enabled.
-2. Set PAYMENT_MODE=stripe, STRIPE_SECRET_KEY (first `sk_test_…`), STRIPE_WEBHOOK_SECRET, APP_URL and STRIPE_PRICE_AMOUNT (integer USD cents, default 499).
+2. Set PAYMENT_MODE=stripe, STRIPE_SECRET_KEY (prefer a restricted sandbox key, `rk_test_…`), STRIPE_WEBHOOK_SECRET, APP_URL and STRIPE_PRICE_AMOUNT (integer USD cents, default 499).
 3. Forward Stripe webhooks for local testing:
    ```bash
    stripe listen --events checkout.session.completed,checkout.session.async_payment_succeeded --forward-to localhost:3000/api/webhook
