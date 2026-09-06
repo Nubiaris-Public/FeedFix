@@ -10,6 +10,7 @@ export default defineConfig({
     reuseExistingServer: false,
     env: {
       FEEDFIX_E2E: "true",
+      TRUSTED_IP_HEADER: "x-feedfix-test-visitor",
       GA_MEASUREMENT_ID: "",
       CLARITY_PROJECT_ID: "",
       APP_URL: "http://127.0.0.1:3100",

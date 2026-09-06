@@ -183,6 +183,9 @@ export default function FeedFix({
       !f.name.toLowerCase().endsWith(".xlsx") ||
       f.size > maxUpload * 1024 * 1024
     ) {
+      setFile(null);
+      setStudyConsent(false);
+      if (fileInput.current) fileInput.current.value = "";
       setError(
         `Choose an XLSX workbook under ${maxUpload} MB. XLSM is not supported.`,
       );
@@ -355,38 +358,32 @@ export default function FeedFix({
           />
         ) : !analysis ? (
           <>
-            <ErrorDecoder />
-            <div
-              className="landing-trust"
-              aria-label="No connection or payment required"
-            >
-              <span>No Seller Center connection</span>
-              <span>No payment to see your explanation</span>
-            </div>
-            <div className="workbook-stage">
-              <section className="intro workbook-intro">
-                <h2>
-                  Walmart item setup
-                  <br className="desktop-break" /> file checker
-                </h2>
-                <p>
-                  {demo
-                    ? "Find spreadsheet errors and safe corrections on supported templates. New layout? Share it privately to help us add support."
-                    : "Check supported spreadsheets for errors and download safe corrections. No account needed."}
-                </p>
-                <Link href="/supported-templates">See supported templates</Link>
-                <p className="workbook-reassurance">
-                  We never connect to your Walmart account.
-                  <br />
-                  Files are automatically deleted within one hour.
-                </p>
-              </section>
+            <ErrorDecoder uploadBusy={Boolean(busy)}>
               <section
                 id="workbook-upload"
                 tabIndex={-1}
                 className="upload-section"
                 aria-label="Upload workbook"
               >
+                <section className="intro workbook-intro">
+                  <h2>
+                    Walmart item setup
+                    <br className="desktop-break" /> file checker
+                  </h2>
+                  <p>
+                    {demo
+                      ? "Find spreadsheet errors and safe corrections on supported templates. New layout? Share it privately to help us add support."
+                      : "Check supported spreadsheets for errors and download safe corrections. No account needed."}
+                  </p>
+                  <Link href="/supported-templates">
+                    See supported templates
+                  </Link>
+                  <p className="workbook-reassurance">
+                    We never connect to your Walmart account.
+                    <br />
+                    Files are automatically deleted within one hour.
+                  </p>
+                </section>
                 <div
                   className={"dropzone" + (drag ? " dragging" : "")}
                   onDragOver={(e) => {
@@ -396,6 +393,7 @@ export default function FeedFix({
                   onDragLeave={() => setDrag(false)}
                   onDrop={(e) => {
                     e.preventDefault();
+                    if (busy) return;
                     setDrag(false);
                     select(e.dataTransfer.files[0]);
                   }}
@@ -404,14 +402,49 @@ export default function FeedFix({
                   <strong>
                     {file ? file.name : "Drop your Walmart file here"}
                   </strong>
-                  <label className="file-label" htmlFor="workbook">
-                    {file ? "Choose a different file" : "or choose a file"}
-                  </label>
+                  {file && (
+                    <span>
+                      {new Intl.NumberFormat("en-US", {
+                        maximumFractionDigits: 1,
+                      }).format(file.size / 1024)}{" "}
+                      KB · Selected, not uploaded
+                    </span>
+                  )}
+                  <button
+                    type="button"
+                    className="secondary choose-workbook"
+                    disabled={Boolean(busy)}
+                    onClick={() => fileInput.current?.click()}
+                  >
+                    {file ? "Change file" : "Choose Excel file"}
+                  </button>
+                  {file && (
+                    <button
+                      type="button"
+                      className="remove-workbook"
+                      disabled={Boolean(busy)}
+                      onClick={() => {
+                        setFile(null);
+                        setReport(null);
+                        const reportInput = document.getElementById(
+                          "report",
+                        ) as HTMLInputElement | null;
+                        if (reportInput) reportInput.value = "";
+                        setStudyConsent(false);
+                        setError("");
+                        if (fileInput.current) fileInput.current.value = "";
+                      }}
+                    >
+                      Remove file
+                    </button>
+                  )}
                   <input
                     ref={fileInput}
                     id="workbook"
                     type="file"
                     accept=".xlsx"
+                    disabled={Boolean(busy)}
+                    aria-label="Excel workbook"
                     onChange={(e) => select(e.target.files?.[0])}
                   />
                   <small>XLSX · No login · Analysis is free</small>
@@ -432,21 +465,28 @@ export default function FeedFix({
                     onChange={(e) => setReport(e.target.files?.[0] ?? null)}
                   />
                 </details>
-                <label className="study-consent">
-                  <input
-                    type="checkbox"
-                    checked={studyConsent}
-                    onChange={(e) => setStudyConsent(e.target.checked)}
-                    disabled={Boolean(busy)}
-                  />
-                  <span>
-                    <strong>
-                      Help improve Walmart template support (optional)
-                    </strong>
-                    <br />
-                    {CONTRIBUTION_CONSENT_TEXT}
-                  </span>
-                </label>
+                <p className="selection-privacy">
+                  Selecting a file does not send it. Upload starts when you
+                  choose Analyze file — free.
+                </p>
+                <details className="contribution-options">
+                  <summary>Help improve template support — optional</summary>
+                  <label className="study-consent">
+                    <input
+                      type="checkbox"
+                      checked={studyConsent}
+                      onChange={(e) => setStudyConsent(e.target.checked)}
+                      disabled={Boolean(busy)}
+                    />
+                    <span>
+                      <strong>
+                        Help improve Walmart template support (optional)
+                      </strong>
+                      <br />
+                      {CONTRIBUTION_CONSENT_TEXT}
+                    </span>
+                  </label>
+                </details>
                 <button
                   className="primary"
                   onClick={analyze}
@@ -454,6 +494,11 @@ export default function FeedFix({
                 >
                   {busy || "Analyze file — free"}
                 </button>
+                {error && (
+                  <div role="alert" className="error">
+                    {error}
+                  </div>
+                )}
                 {demo && (
                   <p className="demo-note">
                     Preview: current Walmart workbook compatibility has not yet
@@ -466,7 +511,7 @@ export default function FeedFix({
                   support: {money(amount)}.
                 </p>
               </section>
-            </div>
+            </ErrorDecoder>
             <div className="landing-resources">
               <section
                 className="home-resources"
@@ -842,7 +887,7 @@ export default function FeedFix({
         <div aria-live="polite" className="status">
           {busy || notice}
         </div>
-        {error && (
+        {error && (analysis || unmapped) && (
           <div role="alert" className="error">
             {error}
           </div>

@@ -101,3 +101,9 @@ See [workbook-study-copies.md](docs/workbook-study-copies.md) for retention, bac
 The landing renders the decoder before its existing upload region. CTA only focuses that region; all supported/new-template/unknown/unsafe outcomes still use the existing components. Global third-party scripts are removed to keep same-document pasted text private. Stable entry slugs reserve future public content boundaries without new routes or user-content indexing. See [contract, source policy, privacy and limitations](docs/error-decoder.md) and [analytics](docs/analytics.md).
 
 Error-message storage requires idempotent redaction: the server rejects submitted text that differs from its sanitized form. The browser displays and submits the final preview, resetting consent after edits. Normalization and redaction expansion cannot exceed the message bound. See the privacy hardening verification report.
+
+The unified landing panel is composed through `ErrorDecoder`'s `children` slot.
+`FeedFix` retains workbook selection, analysis and contribution ownership;
+`ErrorDecoder` owns the active entry and keeps both surfaces mounted, with the
+inactive surface hidden. Switching does not duplicate upload state or API calls.
+The example passes a fixed public sample to the existing decoder endpoint.

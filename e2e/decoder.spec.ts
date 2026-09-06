@@ -1,4 +1,4 @@
-import { expect, test } from "@playwright/test";
+import { expect, test } from "./fixtures";
 
 test("known error gives guidance before upload and reuses the working XLSX flow", async ({
   page,
@@ -15,11 +15,13 @@ test("known error gives guidance before upload and reuses the working XLSX flow"
   await expect(
     page.getByRole("button", { name: "Explain this error", exact: true }),
   ).toBeInViewport();
-  await expect(page.getByRole("list", { name: "How FeedFix works" })).toContainText(
-    "Upload your XLSX only when you’re ready.",
-  );
+  await expect(
+    page.getByRole("list", { name: "How FeedFix works" }),
+  ).toContainText("Upload your XLSX only when you’re ready.");
   expect(
-    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+    await page.evaluate(
+      () => document.documentElement.scrollWidth <= innerWidth,
+    ),
   ).toBe(true);
   await page
     .getByLabel("Walmart error message", { exact: true })
@@ -54,7 +56,10 @@ test("known error gives guidance before upload and reuses the working XLSX flow"
     fullPage: true,
   });
   await page
-    .getByRole("link", { name: "Check my spreadsheet", exact: true })
+    .getByRole("button", {
+      name: "Continue with a spreadsheet — optional",
+      exact: true,
+    })
     .click();
   await expect(
     page.getByRole("region", { name: "Upload workbook" }),
@@ -194,4 +199,83 @@ test("likely match states uncertainty and errors are accessible", async ({
   await expect(page.locator(".decoder").getByRole("alert")).toContainText(
     "1–4,000 characters",
   );
+});
+
+test("example uses the real decoder and file selection stays local until analysis", async ({
+  page,
+}) => {
+  const uploads: string[] = [];
+  page.on("request", (request) => {
+    if (new URL(request.url()).pathname === "/api/analyze")
+      uploads.push(request.url());
+  });
+  await page.goto("/");
+  await expect(
+    page.getByRole("button", { name: "Paste an error", exact: true }),
+  ).toHaveAttribute("aria-pressed", "true");
+  await expect(page.locator("#decoder-help")).toHaveText(
+    "Free explanation · No account required",
+  );
+  await expect(
+    page.getByRole("complementary", { name: "How your error is processed" }),
+  ).toBeVisible();
+  await expect(page.locator("#decoder-help")).not.toContainText("SKUs");
+  const decoded = page.waitForResponse((response) =>
+    response.url().endsWith("/api/error-decoder"),
+  );
+  await page
+    .getByRole("button", { name: "Try an example", exact: true })
+    .click();
+  expect((await (await decoded).json()).status).toBe("DOCUMENTED");
+  await expect(
+    page.getByText(
+      "Example — a sample Walmart error, explained by the real decoder.",
+    ),
+  ).toBeVisible();
+  for (const name of ["What this means", "How to fix it", "Source"]) {
+    await expect(
+      page.getByRole("heading", { name, exact: true }),
+    ).toBeVisible();
+  }
+  await page
+    .getByRole("button", {
+      name: "Continue with a spreadsheet — optional",
+      exact: true,
+    })
+    .click();
+  await expect(page.getByRole("heading", { level: 1 })).toHaveText(
+    "Check your Walmart Excel file",
+  );
+  await expect(
+    page.getByRole("list", { name: "How FeedFix works" }),
+  ).toContainText("Selecting a file does not upload it.");
+  await expect(
+    page.getByRole("list", { name: "How FeedFix works" }),
+  ).not.toContainText("Understand the error");
+  await page
+    .locator("#workbook")
+    .setInputFiles("tests/fixtures/walmart/valid.xlsx");
+  await expect(page.getByText("valid.xlsx", { exact: true })).toBeVisible();
+  await expect(page.getByText(/KB · Selected, not uploaded/)).toBeVisible();
+  await page
+    .getByRole("button", { name: "Paste an error", exact: true })
+    .click();
+  await expect(
+    page.getByRole("heading", {
+      name: "Missing attribute metadata",
+      exact: true,
+    }),
+  ).toBeVisible();
+  await page
+    .getByRole("button", { name: "Check an Excel file", exact: true })
+    .click();
+  await expect(page.getByText("valid.xlsx", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Remove file", exact: true }).click();
+  await expect(page.getByText("valid.xlsx", { exact: true })).toHaveCount(0);
+  expect(
+    await page
+      .locator("#workbook")
+      .evaluate((input: HTMLInputElement) => input.files?.length),
+  ).toBe(0);
+  expect(uploads).toHaveLength(0);
 });

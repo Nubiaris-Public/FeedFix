@@ -76,3 +76,62 @@ payload. Lab LCP comparison was not measured; no production speed claim is made.
 
 Temporary visual QA captures/script removed after retaining the review deliverables.
 The pre-existing user development server was not stopped. No commit or push.
+
+## Unified working panel (follow-up)
+
+The current surface supersedes the two separate entry areas above. The hero and
+identity remain unchanged. A single right-hand panel offers **Paste an error**
+(initial selection) and **Check an Excel file** as native pressed-state buttons.
+Both contents stay mounted, hidden when inactive, so the explanation and selected
+file survive switching. The existing uploader remains owned by FeedFix and is
+passed into ErrorDecoder as a React child; API and matching remain unchanged.
+The result CTA switches the panel and focuses the upload region in place.
+
+**Try an example** submits a fixed, non-sensitive sample to the real decoder API;
+the resulting guidance is explicitly marked as an example. There is no mocked
+answer or client-side classification.
+
+File selection is local until Analyze is pressed. Filename and size are visible,
+with Change file and Remove file controls. Removing clears the workbook, related
+report and consent. Contribution terms live in a separate optional disclosure;
+consent remains explicit, unchecked, and independent of analysis. Upload errors
+appear beside the analysis action. Repeated trust strip and separate upload band
+were removed. No new illustration, font, dependency or enlarged hero.
+
+Browser QA uses Playwright because Browser/IAB is unavailable. Checked production
+at 1536×1024 and 390×844: both entry paths, sample result, selected file controls,
+no page exceptions and no horizontal overflow. Review screenshots:
+`unified-panel-desktop.png` and `unified-panel-file-mobile.png`.
+The new E2E case verifies the real sample response, state preservation, name/size,
+removal and zero analyze requests before submission. Test visitors use the
+existing trusted-header configuration only in the local Playwright server to
+avoid sharing a rate quota across unrelated tests. Production limits are unchanged.
+
+Final follow-up checks: lint and typecheck exited 0; 175 unit/integration tests
+passed; production build exited 0; all 26 desktop/mobile E2E tests passed in
+55.6s after visitor isolation and a stable rerun. Initial E2E runs exposed shared
+rate-quota interference and a development hot reload during editing; neither
+failure was hidden by weakening assertions. `git diff --check` is clean.
+
+## Copy and modality refinement
+
+A single instruction above the error field identifies what to remove. The actions
+end with `Free explanation · No account required`. Processing, non-retention
+without opt-in, no AI/third-party sharing, connection requirements and limitations
+remain visible in a labelled 14px block inside the error surface. The detached
+paragraph and duplicate sensitive-information warning are removed; contextual
+sensitive-input detection remains functional.
+
+Excel mode changes the hero to `Check your Walmart Excel file` and its three
+steps to file selection, deliberate analysis, and review of findings. It explicitly
+says no error message is needed. Switching back restores the error context.
+The real example result retains its label, focused problem title, certainty,
+instructions, official sources and optional continuation. Six spaced, ruled
+answer sections improve scanning without changing knowledge content.
+
+Refinement QA: production screenshots inspected with `view_image` at desktop
+1536×1024 and mobile 390×844. No page errors or horizontal overflow; processing
+text computed at 14px. Captures: `refined-error-panel.png`,
+`refined-excel-context.png`, `refined-example-mobile.png`. Lint/typecheck/build
+passed; 175 unit/integration tests passed; full Playwright suite: 26 passed
+(58.2s). No knowledge, API, retention or analytics changes in this refinement.

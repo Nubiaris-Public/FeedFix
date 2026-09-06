@@ -43,3 +43,10 @@ The landing first asks “What error is Walmart showing you?” and delivers fre
 Unknown messages are discarded unless the user reviews a redacted preview and explicitly consents to a separate private study queue for up to 7 days. No anonymity guarantee, remote LLM, advertising, browser tracking, raw-message analytics or automatic workbook sharing. Fixed entry IDs support future public slugs without user-content URLs or new indexing. See [complete scope, catalog, contracts and privacy](docs/error-decoder.md) and [new event allowlist](docs/analytics.md).
 
 Unknown-message sharing shows the exact final storage preview. Changes reset consent; messages still requiring server redaction are rejected without storage. Filtering is conservative and cannot guarantee anonymity for arbitrary free text.
+
+The landing uses one working panel with two visible entry choices: **Paste an
+error** (default) and **Check an Excel file**. A labelled **Try an example** runs
+the real decoder. Its result can continue to the existing uploader in the same
+panel, without discarding the explanation. File selection shows name and size,
+with change/remove controls; no workbook is sent until Analyze is pressed.
+Template-study consent is a separate optional disclosure, never preselected.

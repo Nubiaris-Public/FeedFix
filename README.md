@@ -113,3 +113,8 @@ In Railway, open the service's runtime logs and search `landing_view` or `upload
 Start on the landing by pasting a non-sensitive Walmart error. “Explain this error” returns free documented or explicitly uncertain guidance before any upload. UNKNOWN offers optional reviewed/redacted sharing, with explicit consent and a separate 7-day private retention period. “Check my spreadsheet” uses the existing uploader, correction and new-template flows. No login, LLM, Walmart connection or payment.
 
 Set `UNKNOWN_ERROR_STORE_DIR` to private storage (local `.feedfix-errors`, Docker `/data/unknown-errors`), separate from all other stores. Do not back it up or log request bodies. [Catalog, API contract, retention and limitations](docs/error-decoder.md); [analytics allowlist](docs/analytics.md). Run `npm test` for matcher/API/privacy tests and `npm run test:e2e` for desktop/mobile guidance, unknown consent, XSS and existing XLSX regression checks.
+
+The landing offers **Paste an error** and **Check an Excel file** in one panel.
+Use **Try an example** to see a clearly labelled response from the real decoder.
+Selecting a workbook does not upload it: review its name/size, change or remove
+it, then choose **Analyze file — free**. Sharing for template study is optional.

@@ -1,7 +1,10 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { newTemplateBytes } from "../tests/helpers/new-template";
 async function upload(page: import("@playwright/test").Page, bytes: Buffer) {
   await page.goto("/");
+  await page
+    .getByRole("button", { name: "Check an Excel file", exact: true })
+    .click();
   await expect(page.getByRole("main")).toHaveAttribute(
     "data-clarity-mask",
     "true",

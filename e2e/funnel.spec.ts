@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 test.beforeEach(async ({ page }) => {
   page.on("pageerror", (error) =>
     console.error("Browser error:", error.message),
@@ -12,6 +12,9 @@ test("free download, optional feedback and optional support", async ({
   page,
 }) => {
   await page.goto("/");
+  await page
+    .getByRole("button", { name: "Check an Excel file", exact: true })
+    .click();
   await expect(
     page.getByRole("heading", { name: /Walmart item setup file checker/ }),
   ).toBeVisible();
@@ -71,6 +74,9 @@ test("free download, optional feedback and optional support", async ({
 });
 test("landing and invalid upload feedback", async ({ page }, info) => {
   await page.goto("/");
+  await page
+    .getByRole("button", { name: "Check an Excel file", exact: true })
+    .click();
   await page.screenshot({
     path: `/tmp/feedfix-${info.project.name}.png`,
     fullPage: true,
@@ -93,6 +99,12 @@ test("optional study copy has explicit consent and can be deleted early", async 
   page,
 }) => {
   await page.goto("/");
+  await page
+    .getByRole("button", { name: "Check an Excel file", exact: true })
+    .click();
+  await page
+    .getByText("Help improve template support — optional", { exact: true })
+    .click();
   const consent = page.getByRole("checkbox", {
     name: /Help improve Walmart template support/,
   });

@@ -1,4 +1,4 @@
-import { test, expect } from "@playwright/test";
+import { test, expect } from "./fixtures";
 import { guides } from "../src/content-guides";
 test("public content is crawlable, navigable and honest about preview support", async ({
   page,
