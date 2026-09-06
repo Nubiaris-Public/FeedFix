@@ -8,7 +8,7 @@ test("public content is crawlable, navigable and honest about preview support", 
   page.on("pageerror", (e) => errors.push(e.message));
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toHaveText(
-    "Walmart item setup file checker",
+    "What error is Walmart showing you?",
   );
   await expect(page.locator(".intro")).toContainText("supported templates");
   await page

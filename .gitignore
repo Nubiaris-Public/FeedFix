@@ -25,3 +25,5 @@ data/walmart/source/*
 .feedfix-notifications/
 
 C:*
+# Private opt-in error study messages.
+.feedfix-errors/

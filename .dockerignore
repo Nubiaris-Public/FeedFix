@@ -20,3 +20,6 @@ data/walmart/source
 
 # Private, time-limited template contact requests.
 .feedfix-notifications/
+
+# Private opt-in error study messages.
+.feedfix-errors/

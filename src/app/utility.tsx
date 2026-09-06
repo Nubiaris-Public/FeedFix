@@ -1,5 +1,6 @@
 "use client";
 import Link from "next/link";
+import ErrorDecoder from "./error-decoder";
 import NewTemplateResult from "./new-template-result";
 import type { UnsupportedUpload } from "../shared/upload-result";
 import {
@@ -351,18 +352,24 @@ export default function FeedFix({
           />
         ) : !analysis ? (
           <>
-            <section className="intro">
-              <h1>
+            <ErrorDecoder />
+            <section className="intro workbook-intro">
+              <h2>
                 Walmart item setup
                 <br className="desktop-break" /> file checker
-              </h1>
+              </h2>
               <p>
                 {demo
                   ? "Find spreadsheet errors and safe corrections on supported templates. New layout? Share it privately to help us add support."
                   : "Check supported spreadsheets for errors and download safe corrections. No account needed."}
               </p>
             </section>
-            <section className="upload-section" aria-label="Upload workbook">
+            <section
+              id="workbook-upload"
+              tabIndex={-1}
+              className="upload-section"
+              aria-label="Upload workbook"
+            >
               <div
                 className={"dropzone" + (drag ? " dragging" : "")}
                 onDragOver={(e) => {

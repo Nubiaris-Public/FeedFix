@@ -1,3 +1,4 @@
+import { UnknownErrorStore } from "./unknown-errors";
 import { LocalTemplateNotifications } from "./template-notifications";
 import { ContributionStore } from "./contributions";
 import {
@@ -148,7 +149,10 @@ export function startCleanup() {
       new UsageLog().cleanup(),
       new ContributionStore().cleanup(),
       new LocalTemplateNotifications().cleanup(),
+      new UnknownErrorStore().cleanup(),
     ]);
+    if (results[4].status === "rejected")
+      console.warn(JSON.stringify({ event: "unknown_error_cleanup_failed" }));
     if (results[3].status === "rejected")
       console.warn(JSON.stringify({ event: "notification_cleanup_failed" }));
     if (results[2].status === "rejected")

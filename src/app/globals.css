@@ -667,3 +667,127 @@ a:focus-visible {
   padding: 12px;
   border: 1px solid var(--border);
 }
+
+/* Decoder uses the existing typography, colors and button hierarchy. */
+.decoder {
+  max-width: 608px;
+  margin: 0 auto 42px;
+  overflow-wrap: anywhere;
+}
+.decoder h1 {
+  font-size: clamp(28px, 5vw, 38px);
+  letter-spacing: -1px;
+  margin-bottom: 12px;
+}
+.decoder-kicker {
+  color: var(--green);
+  font-weight: 700;
+  font-size: 13px;
+  margin: 0 0 10px;
+}
+.decoder label {
+  display: block;
+  font-weight: 600;
+  margin: 12px 0 6px;
+}
+.decoder textarea {
+  display: block;
+  width: 100%;
+  resize: vertical;
+  min-height: 100px;
+  border: 1px solid #85938c;
+  border-radius: 7px;
+  padding: 12px;
+  font: inherit;
+  font-size: 16px;
+  background: white;
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+.decoder textarea:focus-visible,
+.decoder button:focus-visible,
+.decoder a:focus-visible {
+  outline: 3px solid #75a88d;
+  outline-offset: 3px;
+}
+.decoder .decoder-note {
+  font-size: 12px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+.decoder-result {
+  border-top: 2px solid var(--green);
+  padding-top: 20px;
+}
+.decoder h3 {
+  font-size: 17px;
+  font-weight: 700;
+  margin: 24px 0 8px;
+}
+.decoder-result p {
+  margin: 8px 0 14px;
+}
+.decoder ul,
+.decoder ol {
+  padding-left: 24px;
+}
+.decoder ul {
+  list-style: disc;
+}
+.decoder ol {
+  list-style: decimal;
+}
+.decoder li {
+  margin-bottom: 8px;
+}
+.decoder a:not(.primary) {
+  color: var(--green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.decoder-certainty,
+.decoder-workbook,
+.decoder-share {
+  background: var(--soft);
+  padding: 16px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+.decoder-workbook {
+  margin-top: 24px;
+}
+.decoder-workbook h3,
+.decoder-share h3 {
+  margin-top: 0;
+}
+.decoder .decoder-consent {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  font-weight: 400;
+  margin: 16px 0;
+}
+.decoder-consent input {
+  flex: 0 0 18px;
+  width: 18px;
+  height: 18px;
+  margin-top: 3px;
+}
+.workbook-intro h2 {
+  font-size: 27px;
+}
+.workbook-intro p {
+  font-size: 15px;
+}
+#workbook-upload {
+  scroll-margin-top: 24px;
+}
+.decoder-final-preview {
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font: inherit;
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: white;
+}

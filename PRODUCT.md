@@ -1,7 +1,7 @@
 # FeedFix V0 — frozen scope
 
 ## Journey
-Landing → XLSX + optional report → free diagnosis, full correction details → free corrected XLSX and JSON change report → optional support through Stripe Checkout.
+Landing → free Walmart Error Decoder → optional XLSX + optional report → free diagnosis, full correction details → free corrected XLSX and JSON change report → optional support through Stripe Checkout.
 No account. One upload surface. Payment never unlocks data or downloads. Offer support only after generating a corrected file. Ask optionally whether Walmart accepted it: Yes / No / Haven’t tried yet. Responses are user-reported, not verified acceptance.
 
 ## Price and experiment
@@ -24,7 +24,7 @@ Bundled XLSX files are synthetic, visibly marked, not Walmart schemas. Developme
 Authentication, users, organizations, teams, dashboard, subscriptions, OAuth, Walmart APIs, other marketplaces, AI/LLMs, ticketing, email marketing, admin, translations, mobile apps, extensions, scheduled product jobs, synchronization, enrichment, optimization, SEO content, recommendations.
 
 ## Analytics
-Only landing_view, file_selected, upload_completed, analysis_started, analysis_completed, issues_found, no_issues_found, checkout_started, payment_completed, corrected_file_generated, corrected_file_downloaded, analysis_failed, new_template_detected, unknown_spreadsheet_detected, template_share_offered, template_share_accepted, template_share_declined, template_notification_requested. Allowlisted numeric aggregates and file_size_bucket only. Never filenames, SKU, GTIN, titles, cell contents, merchant details, emails, sheet names, template fingerprints or bearer tokens. Analytics failures cannot fail requests. Console activity logs for landing_view and upload_completed are enabled by default via CONSOLE_ACTIVITY_ENABLED (explicit false disables them), independently of the other ANALYTICS_ENABLED funnel events. A server-generated request ID, UTC timestamp and fixed entry point form the operational envelope; no user identifiers or raw paths are included. Counts describe uploader openings and received submissions, not unique people or successful validation.
+Existing events: landing_view, file_selected, upload_completed, analysis_started, analysis_completed, issues_found, no_issues_found, checkout_started, payment_completed, corrected_file_generated, corrected_file_downloaded, analysis_failed, new_template_detected, unknown_spreadsheet_detected, template_share_offered, template_share_accepted, template_share_declined, template_notification_requested. Allowlisted numeric aggregates and file_size_bucket only. Never filenames, SKU, GTIN, titles, cell contents, merchant details, emails, sheet names, template fingerprints or bearer tokens. Analytics failures cannot fail requests. Console activity logs for landing_view and upload_completed are enabled by default via CONSOLE_ACTIVITY_ENABLED (explicit false disables them), independently of the other ANALYTICS_ENABLED funnel events. A server-generated request ID, UTC timestamp and fixed entry point form the operational envelope; no user identifiers or raw paths are included. Counts describe uploader openings and received submissions, not unique people or successful validation.
 
 ## Acceptance / commands
 npm install; npm run dev; npm run lint; npm run typecheck; npm test; npm run test:e2e; npm run build.
@@ -36,3 +36,10 @@ A safely parsed XLSX with corroborating MP_ITEM marker, definitions, hidden meta
 Sharing remains unchecked opt-in, using the existing private study store with a 59-minute expiry. The user can continue without sharing. After successful sharing, show “Thanks — this template is now under review”, without a delivery promise. No automatic mapping promotion occurs.
 
 A separate optional “Notify me” action consents to a private template-specific callback request for up to 30 days. It stores only email, structural template key, declared version, consent/expiry and deletion authorization in a separate private directory on the existing volume. No account, marketing, email transport or automatic sending is introduced. Emails never enter analytics/logs. The request can be removed while the tab retains its private receipt; otherwise it expires. This is an explicit, time-limited exception to anonymous aggregate-only persistence, not a change to workbook retention. See [study/privacy operations](docs/workbook-study-copies.md).
+
+## Trust before upload: Walmart Error Decoder
+The landing first asks “What error is Walmart showing you?” and delivers free deterministic guidance without a file, account, credentials, connection or payment. DOCUMENTED identifies an evidenced family, LIKELY_MATCH makes uncertainty visible, UNKNOWN refuses to guess. Numbered steps, certainty, workbook-only limits and approved Walmart documentation precede the optional “Check my spreadsheet” CTA. The existing uploader and new-template trust flow remain authoritative.
+
+Unknown messages are discarded unless the user reviews a redacted preview and explicitly consents to a separate private study queue for up to 7 days. No anonymity guarantee, remote LLM, advertising, browser tracking, raw-message analytics or automatic workbook sharing. Fixed entry IDs support future public slugs without user-content URLs or new indexing. See [complete scope, catalog, contracts and privacy](docs/error-decoder.md) and [new event allowlist](docs/analytics.md).
+
+Unknown-message sharing shows the exact final storage preview. Changes reset consent; messages still requiring server redaction are rejected without storage. Filtering is conservative and cannot guarantee anonymity for arbitrary free text.

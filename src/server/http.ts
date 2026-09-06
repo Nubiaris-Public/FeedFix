@@ -1,3 +1,7 @@
+import { z } from "zod";
+import { decode } from "../decoder/knowledge";
+import { normalizeMessage, UNKNOWN_CONSENT_VERSION } from "../decoder/input";
+import { UnknownErrorStore, UnreviewedMessageError } from "./unknown-errors";
 import { parseWorkbook, InvalidWorkbookError } from "../engine/workbook";
 import {
   LocalTemplateNotifications,
@@ -131,6 +135,77 @@ async function handleRequest(request: Request) {
         },
         403,
       );
+    if (
+      ["error-decoder", "error-decoder-share"].includes(action) &&
+      request.method === "POST"
+    ) {
+      rateLimit(request, action, action === "error-decoder" ? 20 : 5);
+      if (
+        request.headers.get("content-type")?.split(";")[0].trim() !==
+        "application/json"
+      )
+        return json(
+          { error: "Send a JSON object with a plain-text message." },
+          415,
+        );
+      const body = await boundedBody(request, 24576);
+      const data = JSON.parse(
+        new TextDecoder("utf-8", { fatal: true }).decode(body),
+      );
+      const shape =
+        action === "error-decoder"
+          ? z.object({ message: z.string() }).strict()
+          : z
+              .object({
+                message: z.string(),
+                consentVersion: z.literal(UNKNOWN_CONSENT_VERSION),
+                consent: z.literal(true),
+              })
+              .strict();
+      const parsed = shape.safeParse(data);
+      if (!parsed.success)
+        return json(
+          { error: "Send a message and, for sharing, explicit consent." },
+          400,
+        );
+      const message = normalizeMessage(parsed.data.message);
+      const result = decode(message);
+      if (action === "error-decoder-share") {
+        if (result.status !== "UNKNOWN")
+          return json(
+            {
+              error:
+                "This message already has guidance. Explain it again to see the result.",
+            },
+            409,
+          );
+        const saved = await exclusive(() =>
+          new UnknownErrorStore().save(message, UNKNOWN_CONSENT_VERSION),
+        );
+        track("error_decoder_unknown_share_accepted");
+        return json(saved, 201);
+      }
+      track("error_decoder_submitted");
+      const properties =
+        result.status === "UNKNOWN"
+          ? {}
+          : {
+              entry_id: result.entryId,
+              confidence: result.status,
+              error_family: result.family,
+            };
+      track(
+        result.status === "DOCUMENTED"
+          ? "error_decoder_documented_match"
+          : result.status === "LIKELY_MATCH"
+            ? "error_decoder_likely_match"
+            : "error_decoder_unknown",
+        properties,
+      );
+      if (result.status === "UNKNOWN")
+        track("error_decoder_unknown_share_offered");
+      return json(result);
+    }
     if (action === "template-notification" && request.method === "POST") {
       rateLimit(request, "notification", 10);
       const parsed = notificationInput.safeParse(
@@ -176,11 +251,21 @@ async function handleRequest(request: Request) {
       const data = JSON.parse((await boundedBody(request, 2048)).toString());
       if (
         events.includes(data.event) &&
-        ["landing_view", "file_selected", "template_share_declined"].includes(
-          data.event,
-        )
+        [
+          "landing_view",
+          "file_selected",
+          "template_share_declined",
+          "error_decoder_viewed",
+          "error_decoder_workbook_cta",
+          "error_decoder_unknown_share_declined",
+        ].includes(data.event)
       )
-        track(data.event, data.properties ?? {});
+        track(
+          data.event,
+          data.event.startsWith("error_decoder_")
+            ? {}
+            : (data.properties ?? {}),
+        );
       return json({ ok: true });
     }
     if (
@@ -301,6 +386,36 @@ async function handleRequest(request: Request) {
       404,
     );
   } catch (error) {
+    if (["error-decoder", "error-decoder-share"].includes(action)) {
+      if (error instanceof UnreviewedMessageError)
+        return json(
+          {
+            error:
+              "Review the final redacted text before sharing. Reload the page if it was already reviewed.",
+          },
+          409,
+        );
+      const message = error instanceof Error ? error.message : "";
+      const status = /Too many/.test(message)
+        ? 429
+        : /too large/.test(message)
+          ? 413
+          : action === "error-decoder-share" &&
+              /storage|EACCES|ENOSPC/.test(message)
+            ? 503
+            : 400;
+      return json(
+        {
+          error:
+            status === 429
+              ? "Too many requests. Please wait a minute."
+              : status === 413
+                ? "This message is too large. Paste at most 4,000 characters."
+                : "We could not process this message. Use 1–4,000 characters and try again; sharing requires explicit consent.",
+        },
+        status,
+      );
+    }
     if (action === "analyze") track("analysis_failed");
     if (action === "webhook")
       return json(

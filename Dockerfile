@@ -11,7 +11,7 @@ RUN npx esbuild scripts/study-uploads.ts --bundle --platform=node --format=cjs -
 FROM node:24-bookworm-slim AS runtime
 WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends gosu && rm -rf /var/lib/apt/lists/*
-ENV NODE_ENV=production HOSTNAME=0.0.0.0 PORT=3000 NEXT_TELEMETRY_DISABLED=1 TEMP_STORE_DIR=/data/feedfix USAGE_LOG_PATH=/data/metrics/usage.json CORPUS_STORE_DIR=/data/study NOTIFICATION_STORE_DIR=/data/template-notifications
+ENV NODE_ENV=production HOSTNAME=0.0.0.0 PORT=3000 NEXT_TELEMETRY_DISABLED=1 TEMP_STORE_DIR=/data/feedfix USAGE_LOG_PATH=/data/metrics/usage.json CORPUS_STORE_DIR=/data/study NOTIFICATION_STORE_DIR=/data/template-notifications UNKNOWN_ERROR_STORE_DIR=/data/unknown-errors
 COPY --from=build /app/.next/standalone ./
 COPY --from=build /app/.next/static ./.next/static
 COPY --from=build /app/public ./public

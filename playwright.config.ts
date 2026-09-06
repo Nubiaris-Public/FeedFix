@@ -14,6 +14,7 @@ export default defineConfig({
       CLARITY_PROJECT_ID: "",
       APP_URL: "http://127.0.0.1:3100",
       PAYMENT_MODE: "mock",
+      UNKNOWN_ERROR_STORE_DIR: "/tmp/feedfix-playwright-errors",
       NOTIFICATION_STORE_DIR: "/tmp/feedfix-playwright-notifications",
       CORPUS_STORE_DIR: "/tmp/feedfix-playwright-study",
       TEMP_STORE_DIR: "/tmp/feedfix-playwright",

@@ -1,7 +1,17 @@
+import { entries } from "../decoder/knowledge";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 
 export const events = [
+  "error_decoder_viewed",
+  "error_decoder_submitted",
+  "error_decoder_documented_match",
+  "error_decoder_likely_match",
+  "error_decoder_unknown",
+  "error_decoder_workbook_cta",
+  "error_decoder_unknown_share_offered",
+  "error_decoder_unknown_share_accepted",
+  "error_decoder_unknown_share_declined",
   "landing_view",
   "file_selected",
   "upload_completed",
@@ -86,6 +96,20 @@ export function track(
           ["small", "medium", "large"].includes(String(value))))
     )
       safe[key] = value as string | number;
+  if (event.startsWith("error_decoder_")) {
+    for (const key of Object.keys(safe)) delete safe[key];
+    const entry = entries.find((e) => e.entryId === properties.entry_id);
+    if (entry) {
+      safe.entry_id = entry.entryId;
+      safe.error_family = entry.family;
+      if (
+        ["DOCUMENTED", "LIKELY_MATCH", "UNKNOWN"].includes(
+          String(properties.confidence),
+        )
+      )
+        safe.confidence = String(properties.confidence);
+    }
+  }
   try {
     Promise.resolve(adapter.track(event, safe)).catch(() => {});
   } catch {

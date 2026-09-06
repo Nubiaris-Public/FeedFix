@@ -1,6 +1,6 @@
 # FeedFix V0
 
-A compact, no-account utility: XLSX → free diagnosis → free corrected XLSX + auditable JSON changes → optional Stripe support.
+A compact, no-account utility: paste a Walmart error → free explanation → optional XLSX inspection → free corrected XLSX + auditable JSON changes → optional Stripe support.
 
 **Current workbook compatibility: synthetic fixtures only.** The official Walmart `5.0.20260703-18_22_27-api` schema is now compiled and used by the runtime through explicit workbook mappings. No real current Walmart workbook was supplied, so current workbook compatibility and real seller acceptance remain unvalidated. Optional support after a free corrected download is independent of compatibility evidence; it does not certify Walmart acceptance. See [the integration report](docs/walmart-schema-integration.md) for compiler commands, verification, golden fixtures and measured limits.
 
@@ -59,13 +59,7 @@ Checkout may start during the first 15 minutes and expires 45 minutes after anal
 
 See [.env.example](.env.example). STRIPE_PRICE_AMOUNT is cents, not a Stripe Price ID. MAX_UPLOAD_MB is capped at 25; actual ZIP expansion, sheet and cell limits may reject smaller complex files. FILE_TTL_MINUTES accepts 45–59. TEMP_STORE_DIR needs private, persistent storage. CONSOLE_ACTIVITY_ENABLED defaults to true and logs landing_view/upload_completed to stdout. ANALYTICS_ENABLED=true additionally logs other allowlisted funnel events; replace the Analytics adapter for another sink. No filenames, identifiers or cell contents are logged.
 
-Microsoft Clarity is integrated in the root layout and loads once across page navigation, after hydration. To enable it, set `CLARITY_PROJECT_ID` to the project ID from Clarity → Settings → Setup **before building**, then rebuild/redeploy. Leave it empty to disable browser tracking. This is independent of `ANALYTICS_ENABLED`, which controls server events. No additional npm package is required. The security policy allows Clarity's scripts, collection requests and tracking images, following [Microsoft's CSP documentation](https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-csp).
-
-## Google Analytics 4
-
-Set `GA_MEASUREMENT_ID=G-XXXXXXXXXX` from your GA4 web data stream before building, then rebuild/redeploy. Leave it empty to disable GA4. For Docker, pass `--build-arg GA_MEASUREMENT_ID=G-XXXXXXXXXX`; on Railway, set the service variable with that name so it is supplied to the Docker build. This is a public identifier, not a secret.
-
-The root layout loads Google's tag once after hydration. Keep enhanced measurement for page views and browser history changes enabled in the GA4 stream to measure client-side navigation without duplicate manual events. This integration is independent of `ANALYTICS_ENABLED` and does not forward server funnel events. After deployment, visit the site and check GA4's Realtime report. Implementation references: [Google tag](https://developers.google.com/analytics/devguides/collection/ga4/tag-options), [page views](https://developers.google.com/analytics/devguides/collection/ga4/views), and [CSP requirements](https://developers.google.com/tag-platform/security/guides/csp).
+Browser GA4 and Clarity injection is disabled for Error Decoder privacy. `GA_MEASUREMENT_ID` and `CLARITY_PROJECT_ID` no longer load scripts. Keep hosting-injected replay/tag scripts disabled too. First-party server metrics remain available; see [analytics policy](docs/analytics.md).
 
 ## Limits and launch evidence
 
@@ -114,3 +108,8 @@ Two existing events answer whether the uploader is being visited and whether fil
 Each JSON line includes UTC `timestamp`, `level`, `event`, a server-generated per-request `requestId`, fixed `entryPoint` and allowlisted properties (upload size bucket only for uploads). No filename, IP, email, raw URL, token or workbook content is logged. These are submission/open counts, not people or verified Walmart workbooks. Logging is best effort and cannot block the flow.
 
 In Railway, open the service's runtime logs and search `landing_view` or `upload_completed`. The change requires deploying this version; it does not change an already-running container. Standard output is also available through the host's normal container logs.
+
+## Walmart Error Decoder
+Start on the landing by pasting a non-sensitive Walmart error. “Explain this error” returns free documented or explicitly uncertain guidance before any upload. UNKNOWN offers optional reviewed/redacted sharing, with explicit consent and a separate 7-day private retention period. “Check my spreadsheet” uses the existing uploader, correction and new-template flows. No login, LLM, Walmart connection or payment.
+
+Set `UNKNOWN_ERROR_STORE_DIR` to private storage (local `.feedfix-errors`, Docker `/data/unknown-errors`), separate from all other stores. Do not back it up or log request bodies. [Catalog, API contract, retention and limitations](docs/error-decoder.md); [analytics allowlist](docs/analytics.md). Run `npm test` for matcher/API/privacy tests and `npm run test:e2e` for desktop/mobile guidance, unknown consent, XSS and existing XLSX regression checks.
