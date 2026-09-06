@@ -101,28 +101,54 @@ export default function ErrorDecoder() {
   }
   return (
     <section
-      className="decoder"
+      className={"decoder" + (result ? " has-result" : "")}
       aria-labelledby="decoder-title"
       data-clarity-mask="true"
     >
-      <p className="decoder-kicker">Free Walmart Error Decoder</p>
-      <h1 id="decoder-title">What error is Walmart showing you?</h1>
-      <p>
-        Paste the error message from Seller Center or your Walmart Error Report.
-      </p>
+      <div className="decoder-introduction">
+        <h1 id="decoder-title">What error is Walmart showing you?</h1>
+        <p>
+          Paste the error message from Seller Center or your Walmart Error
+          Report.
+        </p>
+      </div>
+      <ol className="decoder-journey" aria-label="How FeedFix works">
+        <li>
+          <span>1</span>
+          <div>
+            <strong>Understand the error</strong>
+            <p>Get an explanation before sharing a file.</p>
+          </div>
+        </li>
+        <li>
+          <span>2</span>
+          <div>
+            <strong>Check your spreadsheet</strong>
+            <p>Upload your XLSX only when you’re ready.</p>
+          </div>
+        </li>
+        <li>
+          <span>3</span>
+          <div>
+            <strong>Review safe corrections</strong>
+            <p>Available for supported templates.</p>
+          </div>
+        </li>
+      </ol>
       {!result ? (
         <form
+          className="decoder-form"
           onSubmit={(e) => {
             e.preventDefault();
             void explain();
           }}
           aria-busy={busy}
         >
+          <label htmlFor="walmart-error">Walmart error message</label>
           <p id="decoder-privacy" className="decoder-note">
             Don&apos;t paste sensitive information. Remove SKUs, product names,
             emails or merchant-specific data if present.
           </p>
-          <label htmlFor="walmart-error">Walmart error message</label>
           <textarea
             id="walmart-error"
             ref={input}
@@ -344,7 +370,7 @@ export default function ErrorDecoder() {
           {error}
         </p>
       )}
-      <p className="decoder-note">
+      <p className="decoder-note decoder-processing">
         No file, payment or Seller Center connection needed. Text is processed
         by FeedFix, without AI or third-party sharing. No automatic fixes or
         Walmart acceptance guarantee.

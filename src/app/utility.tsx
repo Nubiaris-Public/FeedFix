@@ -326,7 +326,10 @@ export default function FeedFix({
           <Link href="/supported-templates">Compatibility</Link>
         </nav>
       </header>
-      <main data-clarity-mask="true">
+      <main
+        className={!analysis && !unmapped ? "landing" : undefined}
+        data-clarity-mask="true"
+      >
         {unmapped ? (
           <NewTemplateResult
             result={unmapped}
@@ -353,197 +356,199 @@ export default function FeedFix({
         ) : !analysis ? (
           <>
             <ErrorDecoder />
-            <section className="intro workbook-intro">
-              <h2>
-                Walmart item setup
-                <br className="desktop-break" /> file checker
-              </h2>
-              <p>
-                {demo
-                  ? "Find spreadsheet errors and safe corrections on supported templates. New layout? Share it privately to help us add support."
-                  : "Check supported spreadsheets for errors and download safe corrections. No account needed."}
-              </p>
-            </section>
-            <section
-              id="workbook-upload"
-              tabIndex={-1}
-              className="upload-section"
-              aria-label="Upload workbook"
+            <div
+              className="landing-trust"
+              aria-label="No connection or payment required"
             >
-              <div
-                className={"dropzone" + (drag ? " dragging" : "")}
-                onDragOver={(e) => {
-                  e.preventDefault();
-                  setDrag(true);
-                }}
-                onDragLeave={() => setDrag(false)}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  setDrag(false);
-                  select(e.dataTransfer.files[0]);
-                }}
-              >
-                <Icon upload />
-                <strong>
-                  {file ? file.name : "Drop your Walmart file here"}
-                </strong>
-                <label className="file-label" htmlFor="workbook">
-                  {file ? "Choose a different file" : "or choose a file"}
-                </label>
-                <input
-                  ref={fileInput}
-                  id="workbook"
-                  type="file"
-                  accept=".xlsx"
-                  onChange={(e) => select(e.target.files?.[0])}
-                />
-                <small>XLSX · No login · Analysis is free</small>
-              </div>
-              <details className="report-picker">
-                <summary>
-                  {report
-                    ? "Processing report attached"
-                    : "Add a processing report (optional)"}
-                </summary>
-                <label htmlFor="report">
-                  Walmart error report · XLSX or CSV
-                </label>
-                <input
-                  id="report"
-                  type="file"
-                  accept=".xlsx,.csv"
-                  onChange={(e) => setReport(e.target.files?.[0] ?? null)}
-                />
-              </details>
-              <label className="study-consent">
-                <input
-                  type="checkbox"
-                  checked={studyConsent}
-                  onChange={(e) => setStudyConsent(e.target.checked)}
-                  disabled={Boolean(busy)}
-                />
-                <span>
-                  <strong>
-                    Help improve Walmart template support (optional)
-                  </strong>
-                  <br />
-                  {CONTRIBUTION_CONSENT_TEXT}
-                </span>
-              </label>
-              <button
-                className="primary"
-                onClick={analyze}
-                disabled={Boolean(busy)}
-              >
-                {busy || "Analyze file — free"}
-              </button>
-              {demo && (
-                <p className="demo-note">
-                  Preview: current Walmart workbook compatibility has not yet
-                  been verified. Corrections require an explicitly configured
-                  layout; new layouts can be shared for review.
-                </p>
-              )}
-              <p className="price-note">
-                Analysis, corrections and downloads are free. Optional support:{" "}
-                {money(amount)}.
-              </p>
-            </section>
-            <ol className="steps">
-              <li>
-                <span>1</span>Upload
-              </li>
-              <li>
-                <span>2</span>Analyze
-              </li>
-              <li>
-                <span>3</span>Fix
-              </li>
-            </ol>
-            <p className="privacy">
-              We never connect to your Walmart account.
-              <br />
-              Files are automatically deleted within one hour.
-            </p>
-            <section
-              className="home-resources"
-              aria-labelledby="template-support"
-            >
-              <h2 id="template-support">
-                Check template support before uploading
-              </h2>
-              <p>
-                File rules depend on the workbook version and product type.{" "}
-                <Link href="/supported-templates">
-                  See compatibility, limits and file handling
-                </Link>{" "}
-                before you start.
-              </p>
-              <h2>Investigate common Walmart spreadsheet errors</h2>
-              <ul>
-                <li>
-                  <Link href="/guides/walmart-gtin-upc-errors">
-                    GTIN and UPC errors: what to check before changing an
-                    identifier
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/guides/walmart-required-fields-allowed-values">
-                    Missing required fields and invalid allowed values
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/guides/walmart-processing-report">
-                    Read a processing report and preserve your workbook
-                  </Link>
-                </li>
-              </ul>
-            </section>
-            <section className="faq" aria-label="Frequently asked questions">
-              <h2>Frequently asked questions</h2>
-              <details>
-                <summary>
-                  Which Walmart item setup errors can FeedFix check?
-                </summary>
+              <span>No Seller Center connection</span>
+              <span>No payment to see your explanation</span>
+            </div>
+            <div className="workbook-stage">
+              <section className="intro workbook-intro">
+                <h2>
+                  Walmart item setup
+                  <br className="desktop-break" /> file checker
+                </h2>
                 <p>
-                  On supported templates, FeedFix checks GTIN/UPC format,
-                  required fields, duplicate SKUs, URLs and allowed values. It
-                  applies only deterministic changes authorized by the supported
-                  template, such as extra whitespace or enum casing. We never
-                  invent GTINs, SKUs or catalog information. Some issues need
-                  your input or Walmart Support. Acceptance is not guaranteed.
-                </p>
-              </details>
-              <details>
-                <summary>What happens to my file?</summary>
-                <p>
-                  Your workbook is stored temporarily for analysis and checkout,
-                  then automatically deleted within one hour. If you opt in, a
-                  separate private copy of the original workbook is kept for up
-                  to one hour to study template structure, including new
-                  unsupported layouts. You can delete that study copy early
-                  using the button shown after upload. Processing reports are
-                  not included in the study copy. No AI training or Walmart
-                  account connection. Download before expiry. After sharing a
-                  new template, you may separately request a support
-                  notification. That optional email request is kept privately
-                  for up to 30 days.
-                </p>
-              </details>
-              <details>
-                <summary>
-                  Can I upload a Walmart bulk upload spreadsheet?
-                </summary>
-                <p>
-                  XLSX up to {maxUpload} MB and 10,000 items.{" "}
                   {demo
-                    ? "This preview accepts only the clearly marked synthetic fixtures in the repository."
-                    : "Only explicitly supported versions can be corrected. New layouts can be shared privately for review."}{" "}
-                  Macros, external links and encrypted workbooks are not
-                  supported.
+                    ? "Find spreadsheet errors and safe corrections on supported templates. New layout? Share it privately to help us add support."
+                    : "Check supported spreadsheets for errors and download safe corrections. No account needed."}
                 </p>
-              </details>
-            </section>
+                <Link href="/supported-templates">See supported templates</Link>
+                <p className="workbook-reassurance">
+                  We never connect to your Walmart account.
+                  <br />
+                  Files are automatically deleted within one hour.
+                </p>
+              </section>
+              <section
+                id="workbook-upload"
+                tabIndex={-1}
+                className="upload-section"
+                aria-label="Upload workbook"
+              >
+                <div
+                  className={"dropzone" + (drag ? " dragging" : "")}
+                  onDragOver={(e) => {
+                    e.preventDefault();
+                    setDrag(true);
+                  }}
+                  onDragLeave={() => setDrag(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setDrag(false);
+                    select(e.dataTransfer.files[0]);
+                  }}
+                >
+                  <Icon upload />
+                  <strong>
+                    {file ? file.name : "Drop your Walmart file here"}
+                  </strong>
+                  <label className="file-label" htmlFor="workbook">
+                    {file ? "Choose a different file" : "or choose a file"}
+                  </label>
+                  <input
+                    ref={fileInput}
+                    id="workbook"
+                    type="file"
+                    accept=".xlsx"
+                    onChange={(e) => select(e.target.files?.[0])}
+                  />
+                  <small>XLSX · No login · Analysis is free</small>
+                </div>
+                <details className="report-picker">
+                  <summary>
+                    {report
+                      ? "Processing report attached"
+                      : "Add a processing report (optional)"}
+                  </summary>
+                  <label htmlFor="report">
+                    Walmart error report · XLSX or CSV
+                  </label>
+                  <input
+                    id="report"
+                    type="file"
+                    accept=".xlsx,.csv"
+                    onChange={(e) => setReport(e.target.files?.[0] ?? null)}
+                  />
+                </details>
+                <label className="study-consent">
+                  <input
+                    type="checkbox"
+                    checked={studyConsent}
+                    onChange={(e) => setStudyConsent(e.target.checked)}
+                    disabled={Boolean(busy)}
+                  />
+                  <span>
+                    <strong>
+                      Help improve Walmart template support (optional)
+                    </strong>
+                    <br />
+                    {CONTRIBUTION_CONSENT_TEXT}
+                  </span>
+                </label>
+                <button
+                  className="primary"
+                  onClick={analyze}
+                  disabled={Boolean(busy)}
+                >
+                  {busy || "Analyze file — free"}
+                </button>
+                {demo && (
+                  <p className="demo-note">
+                    Preview: current Walmart workbook compatibility has not yet
+                    been verified. Corrections require an explicitly configured
+                    layout; new layouts can be shared for review.
+                  </p>
+                )}
+                <p className="price-note">
+                  Analysis, corrections and downloads are free. Optional
+                  support: {money(amount)}.
+                </p>
+              </section>
+            </div>
+            <div className="landing-resources">
+              <section
+                className="home-resources"
+                aria-labelledby="template-support"
+              >
+                <h2 id="template-support">
+                  Check template support before uploading
+                </h2>
+                <p>
+                  File rules depend on the workbook version and product type.{" "}
+                  <Link href="/supported-templates">
+                    See compatibility, limits and file handling
+                  </Link>{" "}
+                  before you start.
+                </p>
+                <h2>Investigate common Walmart spreadsheet errors</h2>
+                <ul>
+                  <li>
+                    <Link href="/guides/walmart-gtin-upc-errors">
+                      GTIN and UPC errors: what to check before changing an
+                      identifier
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/guides/walmart-required-fields-allowed-values">
+                      Missing required fields and invalid allowed values
+                    </Link>
+                  </li>
+                  <li>
+                    <Link href="/guides/walmart-processing-report">
+                      Read a processing report and preserve your workbook
+                    </Link>
+                  </li>
+                </ul>
+              </section>
+              <section className="faq" aria-label="Frequently asked questions">
+                <h2>Frequently asked questions</h2>
+                <details>
+                  <summary>
+                    Which Walmart item setup errors can FeedFix check?
+                  </summary>
+                  <p>
+                    On supported templates, FeedFix checks GTIN/UPC format,
+                    required fields, duplicate SKUs, URLs and allowed values. It
+                    applies only deterministic changes authorized by the
+                    supported template, such as extra whitespace or enum casing.
+                    We never invent GTINs, SKUs or catalog information. Some
+                    issues need your input or Walmart Support. Acceptance is not
+                    guaranteed.
+                  </p>
+                </details>
+                <details>
+                  <summary>What happens to my file?</summary>
+                  <p>
+                    Your workbook is stored temporarily for analysis and
+                    checkout, then automatically deleted within one hour. If you
+                    opt in, a separate private copy of the original workbook is
+                    kept for up to one hour to study template structure,
+                    including new unsupported layouts. You can delete that study
+                    copy early using the button shown after upload. Processing
+                    reports are not included in the study copy. No AI training
+                    or Walmart account connection. Download before expiry. After
+                    sharing a new template, you may separately request a support
+                    notification. That optional email request is kept privately
+                    for up to 30 days.
+                  </p>
+                </details>
+                <details>
+                  <summary>
+                    Can I upload a Walmart bulk upload spreadsheet?
+                  </summary>
+                  <p>
+                    XLSX up to {maxUpload} MB and 10,000 items.{" "}
+                    {demo
+                      ? "This preview accepts only the clearly marked synthetic fixtures in the repository."
+                      : "Only explicitly supported versions can be corrected. New layouts can be shared privately for review."}{" "}
+                    Macros, external links and encrypted workbooks are not
+                    supported.
+                  </p>
+                </details>
+              </section>
+            </div>
           </>
         ) : (
           <section className="results">

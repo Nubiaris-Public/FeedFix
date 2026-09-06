@@ -12,6 +12,15 @@ test("known error gives guidance before upload and reuses the working XLSX flow"
       name: "What error is Walmart showing you?",
     }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: "Explain this error", exact: true }),
+  ).toBeInViewport();
+  await expect(page.getByRole("list", { name: "How FeedFix works" })).toContainText(
+    "Upload your XLSX only when you’re ready.",
+  );
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth),
+  ).toBe(true);
   await page
     .getByLabel("Walmart error message", { exact: true })
     .fill("Your file is missing attribute metadata in Footwear tab");
