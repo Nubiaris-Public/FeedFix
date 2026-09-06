@@ -57,7 +57,7 @@ Checkout may start during the first 15 minutes and expires 45 minutes after anal
 
 ## Environment
 
-See [.env.example](.env.example). STRIPE_PRICE_AMOUNT is cents, not a Stripe Price ID. MAX_UPLOAD_MB is capped at 25; actual ZIP expansion, sheet and cell limits may reject smaller complex files. FILE_TTL_MINUTES accepts 45–59. TEMP_STORE_DIR needs private, persistent storage. ANALYTICS_ENABLED writes only allowlisted aggregate events to stdout; replace the Analytics adapter for another sink. No filenames, identifiers or cell contents are logged.
+See [.env.example](.env.example). STRIPE_PRICE_AMOUNT is cents, not a Stripe Price ID. MAX_UPLOAD_MB is capped at 25; actual ZIP expansion, sheet and cell limits may reject smaller complex files. FILE_TTL_MINUTES accepts 45–59. TEMP_STORE_DIR needs private, persistent storage. CONSOLE_ACTIVITY_ENABLED defaults to true and logs landing_view/upload_completed to stdout. ANALYTICS_ENABLED=true additionally logs other allowlisted funnel events; replace the Analytics adapter for another sink. No filenames, identifiers or cell contents are logged.
 
 Microsoft Clarity is integrated in the root layout and loads once across page navigation, after hydration. To enable it, set `CLARITY_PROJECT_ID` to the project ID from Clarity → Settings → Setup **before building**, then rebuild/redeploy. Leave it empty to disable browser tracking. This is independent of `ANALYTICS_ENABLED`, which controls server events. No additional npm package is required. The security policy allows Clarity's scripts, collection requests and tracking images, following [Microsoft's CSP documentation](https://learn.microsoft.com/en-us/clarity/setup-and-installation/clarity-csp).
 
@@ -103,3 +103,14 @@ Upload any valid XLSX within the limits; the backend decides compatibility after
 Callbacks use `NOTIFICATION_STORE_DIR` (local `.feedfix-notifications`, Docker `/data/template-notifications`), separate from `TEMP_STORE_DIR` and `CORPUS_STORE_DIR`, with private permissions and a maximum 30-day lifetime. No email is sent by this implementation. Keep the directory out of backups, public assets and build context; one always-on instance and the existing sweeper are required. Email is opt-in and excluded from analytics/logs. See [the operational privacy policy](docs/workbook-study-copies.md#optional-template-notification-callback).
 
 Regression coverage: `tests/new-template.test.ts` and `e2e/new-template.spec.ts` use explicitly synthetic structural candidates against real HTTP handlers on desktop/mobile. These tests do not establish real Walmart compatibility.
+
+
+## Console activity logs
+Two existing events answer whether the uploader is being visited and whether files are arriving. They are enabled by default, including when `ANALYTICS_ENABLED` is unset or false. Set `CONSOLE_ACTIVITY_ENABLED=false` to disable these two logs; `ANALYTICS_ENABLED=true` independently enables the remaining funnel events. No GA4 configuration is required.
+
+- `landing_view`: the browser opens/mounts the main uploader. Reloads/returns count again; this is not unique visitors or a count of all guide-page traffic. JavaScript blocking, network errors and rate limits can undercount; development Strict Mode can repeat mounts.
+- `upload_completed`: a multipart request containing a workbook file has arrived within the overall body limit. Emitted before file validation, so corrupt/rejected files are visible too. It does not mean analysis succeeded. `entryPoint: "analyze"` identifies analysis uploads; `"study_share"` identifies a repeat upload for private sharing. Selecting a file without submitting it is not a received upload.
+
+Each JSON line includes UTC `timestamp`, `level`, `event`, a server-generated per-request `requestId`, fixed `entryPoint` and allowlisted properties (upload size bucket only for uploads). No filename, IP, email, raw URL, token or workbook content is logged. These are submission/open counts, not people or verified Walmart workbooks. Logging is best effort and cannot block the flow.
+
+In Railway, open the service's runtime logs and search `landing_view` or `upload_completed`. The change requires deploying this version; it does not change an already-running container. Standard output is also available through the host's normal container logs.

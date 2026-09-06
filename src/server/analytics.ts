@@ -1,3 +1,6 @@
+import { AsyncLocalStorage } from "node:async_hooks";
+import { randomUUID } from "node:crypto";
+
 export const events = [
   "landing_view",
   "file_selected",
@@ -34,10 +37,37 @@ const allowed = new Set([
   "file_size_bucket",
   "sheet_count",
 ]);
+type EntryPoint = "browser_event" | "analyze" | "study_share" | "api";
+const context = new AsyncLocalStorage<{
+  requestId: string;
+  entryPoint: EntryPoint;
+}>();
+export function withAnalyticsRequest<T>(
+  entryPoint: EntryPoint,
+  operation: () => T,
+): T {
+  return context.run({ requestId: randomUUID(), entryPoint }, operation);
+}
+
 let adapter: Analytics = {
   track: (event, properties) => {
-    if (process.env.ANALYTICS_ENABLED === "true")
-      console.info(JSON.stringify({ event, properties }));
+    const activity = event === "landing_view" || event === "upload_completed";
+    const enabled = activity
+      ? process.env.CONSOLE_ACTIVITY_ENABLED !== "false"
+      : process.env.ANALYTICS_ENABLED === "true";
+    if (enabled)
+      console.info(
+        JSON.stringify({
+          timestamp: new Date().toISOString(),
+          level: "info",
+          ...(context.getStore() ?? {
+            requestId: randomUUID(),
+            entryPoint: "internal",
+          }),
+          event,
+          properties,
+        }),
+      );
   },
 };
 export function setAnalytics(next: Analytics) {

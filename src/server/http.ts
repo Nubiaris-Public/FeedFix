@@ -12,7 +12,7 @@ import { config } from "./config";
 import { analyze, download, publicAnalysis, feedback } from "./service";
 import { authorize, exclusive, startCleanup } from "./store";
 import { checkout, mockPayment, webhook } from "./payment";
-import { events, track } from "./analytics";
+import { events, track, withAnalyticsRequest } from "./analytics";
 let uploadsInFlight = 0;
 const rates = new Map<string, { count: number; until: number }>();
 function rateLimit(request: Request, scope = "general", limit = 90) {
@@ -86,7 +86,21 @@ function fileCheck(file: File, report = false) {
 }
 const json = (body: unknown, status = 200) =>
   Response.json(body, { status, headers: { "Cache-Control": "no-store" } });
-export async function handle(request: Request) {
+export function handle(request: Request) {
+  const action = new URL(request.url).pathname
+    .replace(/^\/api\/?/, "")
+    .split("/")[0];
+  const entryPoint =
+    action === "events"
+      ? "browser_event"
+      : action === "analyze"
+        ? "analyze"
+        : action === "study-share"
+          ? "study_share"
+          : "api";
+  return withAnalyticsRequest(entryPoint, () => handleRequest(request));
+}
+async function handleRequest(request: Request) {
   startCleanup();
   let contribution: ContributionReceipt | undefined;
   const url = new URL(request.url),
@@ -192,6 +206,14 @@ export async function handle(request: Request) {
           report = form.get("report");
         if (!(file instanceof File))
           throw new Error("Choose the original XLSX workbook first.");
+        track("upload_completed", {
+          file_size_bucket:
+            file.size < 1024 * 1024
+              ? "small"
+              : file.size < 10 * 1024 * 1024
+                ? "medium"
+                : "large",
+        });
         fileCheck(file);
         let reportData:
           { buffer: Buffer; extension: "csv" | "xlsx" } | undefined;
@@ -203,14 +225,6 @@ export async function handle(request: Request) {
           };
         }
         if (reportData?.extension === "xlsx") parseWorkbook(reportData.buffer);
-        track("upload_completed", {
-          file_size_bucket:
-            file.size < 1024 * 1024
-              ? "small"
-              : file.size < 10 * 1024 * 1024
-                ? "medium"
-                : "large",
-        });
         const original = Buffer.from(await file.arrayBuffer());
         return json(
           await exclusive(async () => {
