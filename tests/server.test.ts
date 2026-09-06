@@ -165,7 +165,11 @@ it("analytics removes content and tolerates synchronous and asynchronous failure
     sku: "secret",
     file_size_bucket: "merchant",
   });
-  expect(spy).toHaveBeenCalledWith("issues_found", { issue_count: 3 });
+  expect(spy).toHaveBeenCalledWith("issues_found", {
+    issue_count: 3,
+    source: "unknown",
+    is_example: 0,
+  });
   setAnalytics({
     track: () => {
       throw new Error("offline");

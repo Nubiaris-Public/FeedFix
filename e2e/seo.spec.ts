@@ -11,11 +11,14 @@ test("public content is crawlable, navigable and honest about preview support", 
     "What error is Walmart showing you?",
   );
   await expect(page.locator(".intro")).toContainText("supported templates");
+  const opened = page.waitForEvent("popup");
   await page
     .getByRole("navigation", { name: "Main navigation" })
-    .getByRole("link", { name: "Guides", exact: true })
+    .getByRole("link", { name: "Guides (new tab)", exact: true })
     .click();
-  await expect(page).toHaveURL(/\/guides$/);
+  const indexPage = await opened;
+  await expect(indexPage).toHaveURL(/\/guides$/);
+  await indexPage.close();
   const titles = new Set<string>();
   for (const guide of guides) {
     const path = `/guides/${guide.slug}`;
@@ -37,7 +40,16 @@ test("public content is crawlable, navigable and honest about preview support", 
       await page
         .locator('script[type="application/ld+json"]')
         .evaluate((el) => JSON.parse(el.textContent || "{}")),
-    ).toMatchObject({ "@type": "BreadcrumbList" });
+    ).toMatchObject({
+      "@graph": expect.arrayContaining([
+        expect.objectContaining({ "@type": "BreadcrumbList" }),
+        expect.objectContaining({
+          "@type": "Article",
+          headline: guide.title,
+          dateModified: guide.reviewedAt,
+        }),
+      ]),
+    });
     expect(
       await page.evaluate(
         () => document.documentElement.scrollWidth <= window.innerWidth,

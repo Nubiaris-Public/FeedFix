@@ -1,3 +1,5 @@
+import { exampleId, examples } from "../shared/guide-context";
+import { flushFunnel } from "./funnel";
 import { z } from "zod";
 import { decode } from "../decoder/knowledge";
 import { normalizeMessage, UNKNOWN_CONSENT_VERSION } from "../decoder/input";
@@ -16,7 +18,7 @@ import { config } from "./config";
 import { analyze, download, publicAnalysis, feedback } from "./service";
 import { authorize, exclusive, startCleanup } from "./store";
 import { checkout, mockPayment, webhook } from "./payment";
-import { events, track, withAnalyticsRequest } from "./analytics";
+import { events, track, withAnalyticsRequest, markExample } from "./analytics";
 let uploadsInFlight = 0;
 const rates = new Map<string, { count: number; until: number }>();
 function rateLimit(request: Request, scope = "general", limit = 90) {
@@ -102,7 +104,26 @@ export function handle(request: Request) {
         : action === "study-share"
           ? "study_share"
           : "api";
-  return withAnalyticsRequest(entryPoint, () => handleRequest(request));
+  let incoming: unknown = {};
+  const header = request.headers.get("x-feedfix-context");
+  if (header && header.length <= 512) {
+    try {
+      incoming = JSON.parse(header);
+    } catch {
+      /* unknown context */
+    }
+  }
+  return withAnalyticsRequest(
+    entryPoint,
+    async () => {
+      try {
+        return await handleRequest(request);
+      } finally {
+        await flushFunnel();
+      }
+    },
+    incoming,
+  );
 }
 async function handleRequest(request: Request) {
   startCleanup();
@@ -154,7 +175,10 @@ async function handleRequest(request: Request) {
       );
       const shape =
         action === "error-decoder"
-          ? z.object({ message: z.string() }).strict()
+          ? z.union([
+              z.object({ message: z.string() }).strict(),
+              z.object({ example_id: z.string().max(80) }).strict(),
+            ])
           : z
               .object({
                 message: z.string(),
@@ -168,7 +192,18 @@ async function handleRequest(request: Request) {
           { error: "Send a message and, for sharing, explicit consent." },
           400,
         );
-      const message = normalizeMessage(parsed.data.message);
+      let text: string;
+      if ("example_id" in parsed.data) {
+        const id = exampleId(parsed.data.example_id);
+        if (!id)
+          return json(
+            { error: "Choose an available example or paste your own error." },
+            400,
+          );
+        text = examples[id];
+        markExample();
+      } else text = parsed.data.message;
+      const message = normalizeMessage(text);
       const result = decode(message);
       if (action === "error-decoder-share") {
         if (result.status !== "UNKNOWN")
@@ -253,6 +288,8 @@ async function handleRequest(request: Request) {
         events.includes(data.event) &&
         [
           "landing_view",
+          "guide_viewed",
+          "guide_tool_clicked",
           "file_selected",
           "template_share_declined",
           "error_decoder_viewed",
@@ -262,9 +299,9 @@ async function handleRequest(request: Request) {
       )
         track(
           data.event,
-          data.event.startsWith("error_decoder_")
-            ? {}
-            : (data.properties ?? {}),
+          data.properties && typeof data.properties === "object"
+            ? data.properties
+            : {},
         );
       return json({ ok: true });
     }

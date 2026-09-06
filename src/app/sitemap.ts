@@ -1,4 +1,4 @@
-import { guides } from "../content-guides";
+import { publishedGuides as guides } from "../content-guides";
 import type { MetadataRoute } from "next";
 import { seoSettings } from "../server/seo";
 export const dynamic = "force-dynamic";

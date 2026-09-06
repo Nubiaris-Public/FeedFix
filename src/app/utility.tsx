@@ -1,4 +1,6 @@
 "use client";
+import { guideLinks, type navigationContext } from "../shared/guide-context";
+import { contextHeaders } from "../client/journey";
 import Link from "next/link";
 import ErrorDecoder from "./error-decoder";
 import NewTemplateResult from "./new-template-result";
@@ -63,7 +65,7 @@ function Icon({ upload = false }: { upload?: boolean }) {
 function event(name: string, properties = {}) {
   void fetch("/api/events", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...contextHeaders() },
     body: JSON.stringify({ event: name, properties }),
     keepalive: true,
   }).catch(() => {});
@@ -73,7 +75,9 @@ export default function FeedFix({
   maxUpload,
   demo,
   mock,
+  initialNavigation,
 }: {
+  initialNavigation?: ReturnType<typeof navigationContext>;
   amount: number;
   maxUpload: number;
   demo: boolean;
@@ -109,6 +113,7 @@ export default function FeedFix({
     const res = await fetch("/api/" + path, {
       ...options,
       headers: {
+        ...contextHeaders(),
         ...options.headers,
         ...(token ? { Authorization: "Bearer " + token } : {}),
       },
@@ -217,7 +222,11 @@ export default function FeedFix({
       form.set("file", file);
       if (report) form.set("report", report);
       if (studyConsent) form.set("studyConsent", CONTRIBUTION_CONSENT_VERSION);
-      const res = await fetch("/api/analyze", { method: "POST", body: form });
+      const res = await fetch("/api/analyze", {
+        method: "POST",
+        headers: contextHeaders(),
+        body: form,
+      });
       const data = await res.json();
       if (data.contribution?.status === "saved") {
         setStudyCopies((copies) => [...copies, data.contribution]);
@@ -325,8 +334,16 @@ export default function FeedFix({
           FeedFix
         </Link>
         <nav aria-label="Main navigation">
-          <Link href="/guides">Guides</Link>
-          <Link href="/supported-templates">Compatibility</Link>
+          <Link href="/guides" target="_blank" rel="noopener noreferrer">
+            Guides<span className="sr-only"> (new tab)</span>
+          </Link>
+          <Link
+            href="/supported-templates"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            Compatibility<span className="sr-only"> (new tab)</span>
+          </Link>
         </nav>
       </header>
       <main
@@ -358,7 +375,10 @@ export default function FeedFix({
           />
         ) : !analysis ? (
           <>
-            <ErrorDecoder uploadBusy={Boolean(busy)}>
+            <ErrorDecoder
+              uploadBusy={Boolean(busy)}
+              initialNavigation={initialNavigation}
+            >
               <section
                 id="workbook-upload"
                 tabIndex={-1}
@@ -529,22 +549,17 @@ export default function FeedFix({
                 </p>
                 <h2>Investigate common Walmart spreadsheet errors</h2>
                 <ul>
-                  <li>
-                    <Link href="/guides/walmart-gtin-upc-errors">
-                      GTIN and UPC errors: what to check before changing an
-                      identifier
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/guides/walmart-required-fields-allowed-values">
-                      Missing required fields and invalid allowed values
-                    </Link>
-                  </li>
-                  <li>
-                    <Link href="/guides/walmart-processing-report">
-                      Read a processing report and preserve your workbook
-                    </Link>
-                  </li>
+                  {guideLinks.map((g) => (
+                    <li key={g.slug}>
+                      <Link
+                        href={`/guides/${g.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                      >
+                        {g.title} (new tab)
+                      </Link>
+                    </li>
+                  ))}
                 </ul>
               </section>
               <section className="faq" aria-label="Frequently asked questions">
@@ -862,7 +877,10 @@ export default function FeedFix({
                     try {
                       await api("contribution/" + copy.id, {
                         method: "POST",
-                        headers: { "Content-Type": "application/json" },
+                        headers: {
+                          "Content-Type": "application/json",
+                          ...contextHeaders(),
+                        },
                         body: JSON.stringify({ deleteToken: copy.deleteToken }),
                       });
                       setStudyCopies((copies) =>

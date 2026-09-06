@@ -278,7 +278,10 @@ it("drops private analytics properties and tolerates failed analytics", async ()
     sheet_count: 3,
   });
   expect(events).toEqual([
-    { event: "template_share_declined", properties: { sheet_count: 3 } },
+    {
+      event: "template_share_declined",
+      properties: { sheet_count: 3, source: "unknown", is_example: 0 },
+    },
   ]);
   setAnalytics({
     track: () => {

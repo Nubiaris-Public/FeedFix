@@ -22,7 +22,7 @@ export default function ContentShell({
         {children}
       </main>
       <footer className="content-footer">
-        <Link href="/">File checker</Link>
+        <Link href="/">Error decoder</Link>
         <Link href="/guides">All guides</Link>
         <Link href="/supported-templates">Supported templates</Link>
         <p>Independent tool. Not affiliated with Walmart.</p>

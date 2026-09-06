@@ -1,5 +1,11 @@
 "use client";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import { contextHeaders } from "../client/journey";
+import {
+  navigationContext,
+  examples,
+  type ExampleId,
+} from "../shared/guide-context";
 import type { DecoderResult } from "../shared/error-decoder";
 import {
   MAX_ERROR_CHARACTERS,
@@ -10,7 +16,7 @@ import {
 function event(name: string) {
   void fetch("/api/events", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...contextHeaders() },
     body: JSON.stringify({ event: name }),
     keepalive: true,
   }).catch(() => {});
@@ -18,7 +24,7 @@ function event(name: string) {
 async function post(path: string, body: unknown) {
   const response = await fetch("/api/" + path, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...contextHeaders() },
     credentials: "omit",
     cache: "no-store",
     body: JSON.stringify(body),
@@ -30,13 +36,19 @@ async function post(path: string, body: unknown) {
 export default function ErrorDecoder({
   children,
   uploadBusy,
+  initialNavigation,
 }: {
   children: ReactNode;
   uploadBusy: boolean;
+  initialNavigation?: ReturnType<typeof navigationContext>;
 }) {
-  const [mode, setMode] = useState<"error" | "file">("error");
+  const [mode, setMode] = useState<"error" | "file">(
+    initialNavigation?.action === "file" ? "file" : "error",
+  );
   const [example, setExample] = useState(false);
-  const sample = "Your file is missing attribute metadata in Footwear tab";
+  const related = initialNavigation?.guide;
+  const sampleId = related?.example ?? "missing-attribute-metadata";
+  const sample = examples[sampleId];
   function openWorkbook() {
     setMode("file");
     requestAnimationFrame(() =>
@@ -78,14 +90,16 @@ export default function ErrorDecoder({
   } catch {
     /* Submit provides the input error. */
   }
-  async function explain(text = message) {
+  async function explain(text = message, exampleId?: ExampleId) {
     if (busy) return;
+    setExample(Boolean(exampleId));
     setError("");
     setBusy(true);
     try {
-      const answer: DecoderResult = await post("error-decoder", {
-        message: text,
-      });
+      const answer: DecoderResult = await post(
+        "error-decoder",
+        exampleId ? { example_id: exampleId } : { message: text },
+      );
       setResult(answer);
       setConsent(false);
       setShareState("offered");
@@ -196,6 +210,12 @@ export default function ErrorDecoder({
         </div>
         <div hidden={mode !== "file"}>{children}</div>
         <div hidden={mode !== "error"}>
+          {related && !result && (
+            <p className="decoder-note">
+              A related example is ready. Choose Try an example to run it, or
+              enter your own message. Nothing is submitted automatically.
+            </p>
+          )}
           {example && (
             <p className="example-label" role="status">
               Example — a sample Walmart error, explained by the real decoder.
@@ -252,9 +272,8 @@ export default function ErrorDecoder({
                 className="try-example"
                 disabled={busy}
                 onClick={() => {
-                  setMessage(sample);
                   setExample(true);
-                  void explain(sample);
+                  void explain(sample, sampleId);
                 }}
               >
                 Try an example

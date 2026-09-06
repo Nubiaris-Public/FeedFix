@@ -6,10 +6,12 @@ export default defineConfig({
   use: { baseURL: "http://127.0.0.1:3100", trace: "retain-on-failure" },
   webServer: {
     command: "npm run dev -- --port 3100",
+    timeout: 120000,
     url: "http://127.0.0.1:3100",
     reuseExistingServer: false,
     env: {
       FEEDFIX_E2E: "true",
+      SEO_INDEXABLE: "false",
       TRUSTED_IP_HEADER: "x-feedfix-test-visitor",
       GA_MEASUREMENT_ID: "",
       CLARITY_PROJECT_ID: "",
@@ -24,7 +26,13 @@ export default defineConfig({
     },
   },
   projects: [
-    { name: "desktop", use: { ...devices["Desktop Chrome"] } },
+    {
+      name: "desktop",
+      use: {
+        ...devices["Desktop Chrome"],
+        viewport: { width: 1440, height: 900 },
+      },
+    },
     {
       name: "mobile",
       use: { ...devices["iPhone 13"], defaultBrowserType: "chromium" },

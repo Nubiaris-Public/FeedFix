@@ -143,7 +143,11 @@ export async function analyze(
     sheet_count: workbook.sheets.length,
     processing_duration_ms: Date.now() - start,
   };
-  track("analysis_completed", counts);
+  track("analysis_completed", {
+    ...counts,
+    workbook_kind: schema.synthetic ? "synthetic" : "real",
+    support_verified: evidence.paidSupportEligible ? 1 : 0,
+  });
   track(issues.length ? "issues_found" : "no_issues_found", counts);
   return {
     status: "SUPPORTED" as const,
@@ -185,7 +189,10 @@ export async function download(id: string, token: string, report = false) {
       await store.put(record);
     }
   }
-  if (!report) track("corrected_file_downloaded");
+  if (!report)
+    track("corrected_file_downloaded", {
+      workbook_kind: record.synthetic ? "synthetic" : "real",
+    });
   return content;
 }
 

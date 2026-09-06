@@ -1,8 +1,12 @@
+import { publicContext, guideId } from "../shared/guide-context";
+import { recordFunnel } from "./funnel";
 import { entries } from "../decoder/knowledge";
 import { AsyncLocalStorage } from "node:async_hooks";
 import { randomUUID } from "node:crypto";
 
 export const events = [
+  "guide_viewed",
+  "guide_tool_clicked",
   "error_decoder_viewed",
   "error_decoder_submitted",
   "error_decoder_documented_match",
@@ -51,12 +55,29 @@ type EntryPoint = "browser_event" | "analyze" | "study_share" | "api";
 const context = new AsyncLocalStorage<{
   requestId: string;
   entryPoint: EntryPoint;
+  guide_id?: string;
+  source: string;
+  is_example: number;
 }>();
 export function withAnalyticsRequest<T>(
   entryPoint: EntryPoint,
   operation: () => T,
+  incoming: unknown = {},
 ): T {
-  return context.run({ requestId: randomUUID(), entryPoint }, operation);
+  return context.run(
+    {
+      requestId: randomUUID(),
+      entryPoint,
+      ...publicContext(incoming),
+      is_example: 0,
+    },
+    operation,
+  );
+}
+
+export function markExample() {
+  const c = context.getStore();
+  if (c) c.is_example = 1;
 }
 
 let adapter: Analytics = {
@@ -87,6 +108,7 @@ export function track(
   event: AnalyticsEvent,
   properties: Record<string, unknown> = {},
 ) {
+  if (!events.includes(event)) return;
   const safe: Record<string, number | string> = {};
   for (const [key, value] of Object.entries(properties))
     if (
@@ -110,6 +132,29 @@ export function track(
         safe.confidence = String(properties.confidence);
     }
   }
+  const request = context.getStore();
+  const guide = guideId(properties.guide_id) ?? guideId(request?.guide_id);
+  if (guide) safe.guide_id = guide;
+  safe.source = publicContext({ source: request?.source }).source;
+  safe.is_example = request?.is_example ?? 0;
+  if (["real", "synthetic"].includes(String(properties.workbook_kind))) {
+    safe.workbook_kind = String(properties.workbook_kind);
+    if (properties.workbook_kind === "synthetic") safe.is_example = 1;
+  }
+  if (
+    event === "guide_tool_clicked" &&
+    ["example", "error", "file"].includes(String(properties.action))
+  )
+    safe.action = String(properties.action);
+  if (
+    event === "analysis_completed" &&
+    [0, 1].includes(properties.support_verified as number)
+  )
+    safe.support_verified = properties.support_verified as number;
+  recordFunnel(event, {
+    ...safe,
+    entry_point: request?.entryPoint ?? "internal",
+  });
   try {
     Promise.resolve(adapter.track(event, safe)).catch(() => {});
   } catch {

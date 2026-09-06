@@ -23,3 +23,62 @@ Decoder events drop all existing numeric fields and arbitrary properties. Only a
 Sync throws and async adapter rejections are swallowed and tested. Metrics failure cannot change guidance, consent storage or XLSX fulfillment. Reviewed unknown messages belong only to the separate 7-day private study store described in [error-decoder.md](error-decoder.md), never aggregate analytics or stdout. Configure infrastructure logs accordingly.
 
 The hardened reviewed-text flow does not add analytics properties. Preview text and redaction results remain excluded, including when sharing is rejected for requiring further redaction.
+
+## SEO sprint: private, persistent aggregate funnel
+
+This section supersedes the earlier property-free decoder-event description.
+Existing allowlists remain; added dimensions are validated `guide_id`, bounded
+`source`, server-owned `is_example` (0/1), `workbook_kind` (real/synthetic), and
+`support_verified` (0/1 on server analysis_completed). Decoder entry/family values
+still come from the catalog. `guide_tool_clicked` permits only action
+example/error/file. Browser clients cannot emit upload/analysis/payment completion.
+The aggregate key also records the existing bounded request entry point, separating
+analysis receipts from study reuploads. No merchant-derived strings are allowed.
+
+`src/server/funnel.ts` writes daily counts to `USAGE_LOG_PATH + .funnel.json`, beside
+the existing usage ledger. `npm run stats` reads both. A single in-process queue
+serializes atomic replacements (0700 parent / 0600 file); the HTTP boundary drains
+pending writes. Failed metrics do not fail the request. No raw event stream,
+request IDs, IPs, cookie values, auth headers, filenames or messages enter this file.
+Only 90 days of aggregate day buckets are retained, pruned on subsequent writes.
+Queue/counter-cardinality limits prevent unbounded growth; at capacity or storage
+failure some events may be lost. This is single-writer local storage, not a durable
+multi-instance analytics service. Console activity flags still control console
+output independently of these aggregate metrics, as with the existing usage log.
+
+The key dimension order is supplied by `npm run stats` in `funnel.dimensions`:
+event, guide_id, source, is_example, entry_id, workbook_kind, entry_point, action,
+support_verified. Missing context uses none/unknown. A browser selection has not
+yet established workbook provenance. For verified current compatible analysis,
+require analysis_completed + real + support_verified=1 + is_example=0; non-synthetic
+alone is insufficient. Synthetic compatible analyses have is_example=1 and
+workbook_kind=synthetic. Local E2E counts live only under `/tmp` paths configured
+by Playwright; unit tests write only in the explicitly enabled temporary-ledger test.
+
+Guide views are client effects protected against duplicate rerenders. Views with
+JavaScript disabled are not counted; articles remain fully readable. User retries
+are separate requests, not deduplicated users. Existing correction/payment state
+retains its own idempotency. Downloads count server responses rather than proof
+of browser receipt. No persistent identifier was added to join visits, uploads
+and payments. Do not calculate a person-level conversion rate from these counts.
+
+Attribution is bounded and per request through AsyncLocalStorage. Known click
+marker presence or paid-medium values classify paid without retaining the marker.
+Search-engine referrers classify search_referral, not organic. Missing/stripped
+or same-origin referrers are unknown. Approved source hints can accompany guide
+navigation but are client-reported and not proof of acquisition. No full referrer,
+query string or click ID is saved. Webhooks usually have unknown guide/source;
+Stripe and payment processing were not changed. Mock payment tests remain local.
+
+`funnel.rows` exposes named fields for querying without parsing aggregate keys.
+For example, after `npm run --silent stats > stats.json`:
+
+```sh
+jq '.funnel.rows[] | select(.event == "error_decoder_submitted") | {is_example, guide_id, source, count}' stats.json
+jq '.funnel.rows[] | select(.event == "analysis_completed" and .workbook_kind == "real" and .support_verified == 1 and .is_example == 0)' stats.json
+jq '.funnel.rows[] | select(.event == "upload_completed" and .entry_point == "analyze")' stats.json
+```
+
+The first query separates explicit examples from submitted messages. The second
+requires verified current support, not merely successful parsing. These commands
+read local aggregates; they neither call Walmart nor perform payments/uploads.

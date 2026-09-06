@@ -219,6 +219,8 @@ it("does not leak raw text or arbitrary analytics dimensions; analytics outages 
     entry_id: "missing-attribute-metadata",
     confidence: "DOCUMENTED",
     error_family: "missing-attribute-metadata",
+    source: "unknown",
+    is_example: 0,
   });
   track("error_decoder_unknown", {
     message,
@@ -227,7 +229,10 @@ it("does not leak raw text or arbitrary analytics dimensions; analytics outages 
     error_family: message,
     issue_count: 123456789012,
   });
-  expect(spy).toHaveBeenLastCalledWith("error_decoder_unknown", {});
+  expect(spy).toHaveBeenLastCalledWith("error_decoder_unknown", {
+    source: "unknown",
+    is_example: 0,
+  });
   expect(JSON.stringify(spy.mock.calls)).not.toMatch(
     /private|secret|123456789012/,
   );

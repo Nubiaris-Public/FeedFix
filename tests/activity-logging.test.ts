@@ -84,7 +84,11 @@ it("logs received uploads before validation, and distinguishes a study reupload"
     "upload_completed",
   ]);
   expect(entries.map((e) => e.entryPoint)).toEqual(["analyze", "study_share"]);
-  expect(entries[0].properties).toEqual({ file_size_bucket: "small" });
+  expect(entries[0].properties).toEqual({
+    file_size_bucket: "small",
+    source: "unknown",
+    is_example: 0,
+  });
   expect(entries[0].requestId).not.toBe(entries[1].requestId);
   expect(JSON.stringify(entries)).not.toMatch(/private|corrupt/);
 });

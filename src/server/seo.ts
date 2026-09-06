@@ -21,13 +21,9 @@ export function supportedWorkbookConfigured() {
 }
 
 export function homeMetadata(privateResult = false): Metadata {
-  const preview = !supportedWorkbookConfigured();
-  const title = preview
-    ? "Walmart Item Setup File Checker — Preview | FeedFix"
-    : "Free Walmart Item Setup File Checker | FeedFix";
-  const description = preview
-    ? "Preview FeedFix's spreadsheet error checker with synthetic examples. Official Walmart templates are not yet enabled. No account required."
-    : "Check supported Walmart item setup XLSX files for errors. Download safe corrections and a change report free. No Walmart login required.";
+  const title = "Walmart Item Setup Errors Explained | FeedFix";
+  const description =
+    "Understand Walmart item setup errors and what to check next. Free explanations with official references. No account or file required.";
   return contentMetadata("/", title, description, privateResult);
 }
 
@@ -58,7 +54,7 @@ export function contentMetadata(
           url: origin + "/social-image",
           width: 1200,
           height: 630,
-          alt: "FeedFix — Walmart spreadsheet error guides and file checker",
+          alt: "FeedFix — Walmart item setup errors explained",
         },
       ],
     },

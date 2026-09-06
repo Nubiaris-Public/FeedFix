@@ -1,13 +1,13 @@
 import Link from "next/link";
-import { guides } from "../../content-guides";
+import { publishedGuides as guides } from "../../content-guides";
 import { contentMetadata } from "../../server/seo";
 import ContentShell from "../content-shell";
 export const dynamic = "force-dynamic";
 export function generateMetadata() {
   return contentMetadata(
     "/guides",
-    "Walmart Spreadsheet Error Guides | FeedFix",
-    "Practical guides to Walmart item setup errors: product identifiers, required fields, allowed values and processing reports. Learn what can be safely corrected.",
+    "Walmart Item Setup Error Guides | FeedFix",
+    "Understand Walmart product ID, required-field, template metadata, SKU and processing-report errors. Read specific guidance before changing or sharing a file.",
   );
 }
 export default function Guides() {

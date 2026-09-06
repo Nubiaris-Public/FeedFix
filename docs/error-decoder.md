@@ -68,3 +68,10 @@ Set `UNKNOWN_ERROR_STORE_DIR` (default `.feedfix-errors`; Docker `/data/unknown-
 GA4 and Clarity script injection was removed from the root layout. A global third-party script can observe a same-document textarea even if replay masking is configured; masking alone is insufficient for the no-third-party-text requirement. Their old environment settings no longer load browser trackers anywhere, including when returning from Guides. First-party allowlisted analytics remain. Hosting-injected scripts must also be disabled by the operator. No advertising or training use.
 
 See [analytics policy](analytics.md) and [workbook study privacy](workbook-study-copies.md) for independent retention boundaries. This error-message consent does not authorize workbook retention or template callbacks.
+
+Guide demonstrations now submit `{ "example_id": "missing-attribute-metadata" }`
+to the same decoder endpoint after an explicit click. The backend resolves only
+approved examples, never accepts arbitrary example text, and sets is_example=1.
+Normal `{ "message": "..." }` requests retain real-query classification. Guide
+context is an optional bounded request header, not pasted content or saved identity.
+The explanation/consent/unknown-message retention behavior is unchanged.

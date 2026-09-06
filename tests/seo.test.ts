@@ -9,7 +9,9 @@ it("keeps preview deployments out of the index by default", () => {
   vi.stubEnv("SEO_INDEXABLE", "false");
   vi.stubEnv("SCHEMA_PATH", "");
   expect(homeMetadata().robots).toEqual({ index: false, follow: true });
-  expect(homeMetadata().title).toContain("Preview");
+  expect(homeMetadata().title).toBe(
+    "Walmart Item Setup Errors Explained | FeedFix",
+  );
   expect(sitemap()).toEqual([]);
   expect(robots().sitemap).toBeUndefined();
 });

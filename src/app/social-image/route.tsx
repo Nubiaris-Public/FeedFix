@@ -32,7 +32,7 @@ export function GET() {
           maxWidth: 980,
         }}
       >
-        Understand your Walmart spreadsheet errors.
+        Walmart item setup errors explained.
       </div>
       <div
         style={{
@@ -42,7 +42,7 @@ export function GET() {
           color: "#5c6570",
         }}
       >
-        Practical guides · File checker · Clear compatibility limits
+        Free explanations · Official references · No file required
       </div>
     </div>,
     { width: 1200, height: 630 },
